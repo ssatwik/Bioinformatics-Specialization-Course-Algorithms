@@ -1,368 +1,367 @@
 import random
 import copy
 
-def pattern_matching(sequence, pattern):
-    # returns all indices where a pattern is found in a sequence
-    main_sequence = sequence
-    search_pattern = pattern
-    sequence_length = len(main_sequence)
-    pattern_length = len(search_pattern)
-    match_indices = []
-    for i in range(0, sequence_length - pattern_length + 1):
-        is_match = 1
-        for j in range(i, i + pattern_length):
-            if main_sequence[j] != search_pattern[j - i]:
-                is_match = 0
+def pattern_matching(seq,pattern):
+    # returns all indices where a pattern is found in a seq
+    s1=seq
+    s2=pattern
+    n=len(s1)
+    k=len(s2)
+    lis=[]
+    for i in range(0,n-k+1):
+        f=1
+        for j in range(i,i+k):
+            if s1[j]!=s2[j-i]:
+                f=0
                 break
-        if is_match: match_indices.append(i)
-    return match_indices
+        if f: lis.append(i)
+    return lis
 
-def reverse_complement(dna_sequence):
+def reverse_complement(s):
     # returns reverse complement of a sequence
-    complement_map = {
-        'A': 'T',
-        'T': 'A',
-        'G': 'C',
-        'C': 'G'
+    m={
+        'A':'T',
+        'T':'A',
+        'G':'C',
+        'C':'G'
     }
-    dna_sequence = dna_sequence.upper()
-    reversed_complement = ''
-    for i in range(len(dna_sequence) - 1, -1, -1):
-        reversed_complement += complement_map[dna_sequence[i]]
-    return reversed_complement
+    s=s.upper()
+    ss=''
+    for i in range(len(s)-1,-1,-1): ss+=m[s[i]]
+    return ss
 
-def frequency_table(sequence, k):
-    # returns frequencies of all k-mers in a sequence given sequence and k
-    dna_sequence = sequence
-    sequence_length = len(dna_sequence)
-    kmer_counts = {}
-    for i in range(0, sequence_length - k + 1):
-        current_kmer = dna_sequence[i:i + k]
-        if current_kmer not in kmer_counts: kmer_counts[current_kmer] = 0
-        kmer_counts[current_kmer] += 1
-    return kmer_counts
+def frequency_table(seq,k):
+    # returns frequencies of all k-mers in a sequence given seq and k
+    s=seq
+    n=len(s)
+    m={}
+    for i in range(0,n-k+1):
+        ss=s[i:i+k]
+        if ss not in m: m[ss]=0
+        m[ss]+=1
+    return m
 
-def find_clump_pattern(sequence, k, window_size, min_occurrences):
-    # returns all k-mers occurring at least min_occurrences times in a window
-    dna_sequence = sequence
-    sequence_length = len(dna_sequence)
-    clump_kmers = set()
-    for i in range(0, sequence_length - window_size + 1):
-        window = dna_sequence[i:i + window_size]
-        window_counts = frequency_table(window, k)
-        for kmer, count in window_counts.items():
-            if count >= min_occurrences: clump_kmers.add(kmer)
-    return list(clump_kmers)
+def find_clump_pattern(seq,k,L,t):
+    # returns all k-mers occuring atleast t times in a window of length L in the sequence
+    s=seq
+    n=len(s)
+    lis=set()
+    for i in range(0,n-L+1):
+        ss=s[i:i+L]
+        m=frequency_table(ss,k)
+        for p,v in m.items():
+            if v>=t: lis.add(p)
+    return list(lis)
 
-def skew(dna_sequence):
+def skew(seq):
     # returns skew list for a sequence
-    sequence = dna_sequence
-    current_skew = 0
-    skew_values = []
-    for i in range(len(sequence)):
-        if sequence[i] == 'G': current_skew += 1
-        elif sequence[i] == 'C': current_skew -= 1
-        skew_values.append(current_skew)
-    return skew_values
+    s=seq
+    skew=0
+    lis=[]
+    for i in range(len(seq)):
+        if s[i]=='G': skew+=1
+        elif s[i]=='C': skew-=1
+        lis.append(skew)
+    return lis
 
-def hamming_distance(sequence1, sequence2):
-    distance = 0
-    for i in range(len(sequence1)):
-        if sequence1[i] != sequence2[i]: distance += 1
-    return distance
+def hamming_distance(p,q):
+    h=0
+    for i in range(len(p)):
+        if p[i]!=q[i]: h+=1
+    return h
 
-def approximate_pattern_matching(sequence, pattern, max_distance):
-    # returns indices of k-mers with hamming distance to pattern at most max_distance
-    main_sequence = sequence
-    search_pattern = pattern
-    sequence_length = len(main_sequence)
-    pattern_length = len(search_pattern)
-    match_indices = []
-    for i in range(sequence_length - pattern_length + 1):
-        current_kmer = main_sequence[i:i + pattern_length]
-        if hamming_distance(current_kmer, search_pattern) <= max_distance: 
-            match_indices.append(i)
-    return match_indices
+def approximate_pattern_matching(seq,pattern,d):
+    # returns indices of k-mers with hamming distance to pattern atmost d
+    s1=seq
+    s2=pattern
+    n=len(s1)
+    k=len(s2)
+    lis=[]
+    for i in range(n-k+1):
+        ss=s1[i:i+k]
+        if hamming_distance(ss,s2)<=d: lis.append(i)
+    return lis
 
-def neighbors(pattern, max_distance):
-    # returns all strings with hamming distance to pattern at most max_distance
-    original_pattern = pattern
-    pattern_length = len(original_pattern)
-    neighbor_list = []
-    if pattern_length < 1: return neighbor_list
-    elif max_distance == 0: return [pattern,]
-    elif pattern_length == 1: return ['A','C','G','T']
-    prefix = pattern[:pattern_length - 1]
-    prefix_neighbors = neighbors(prefix, max_distance)
-    bases = ('A','C','G','T')
-    for neighbor in prefix_neighbors:
-        if hamming_distance(neighbor, original_pattern) == max_distance:
-            neighbor_list.append(neighbor + original_pattern[pattern_length - 1])
+def neighbors(pattern,d):
+    # returns all strings with hamming distance to pattern atmost d
+    s=pattern
+    n=len(s)
+    lis=[]
+    if n<1: return lis
+    elif d==0: return [pattern,]
+    elif n==1: return ['A','C','G','T']
+    ss=pattern[:n-1]
+    ll=neighbors(ss,d)
+    b=('A','C','G','T')
+    for st in ll:
+        if hamming_distance(st,s)==d:
+            lis.append(st+s[n-1])
         else:
-            for base in bases:
-                neighbor_list.append(neighbor + base)
-    return neighbor_list
+            for bb in b:
+                lis.append(st+bb)
+    return lis
 
-def better_frequent_kmers(sequence, k, max_distance):
-    # returns max frequency kmers with hamming distance to sequence at most max_distance
-    dna_sequence = sequence
-    sequence_length = len(dna_sequence)
-    kmer_frequencies = {}
-    for i in range(sequence_length - k + 1):
-        current_kmer = dna_sequence[i:i + k]
-        kmer_neighbors = neighbors(current_kmer, max_distance)
-        for neighbor in kmer_neighbors:
-            if neighbor not in kmer_frequencies: kmer_frequencies[neighbor] = 0
-            kmer_frequencies[neighbor] += 1
-    max_frequency = max(kmer_frequencies.values())
-    top_kmers = []
-    for kmer, frequency in kmer_frequencies.items():
-        if frequency == max_frequency: top_kmers.append(kmer)
-    return top_kmers
+def better_frequent_kmers(seq,k,d):
+    # returns max frequency kmers with hamming distance to sequence atmost d
+    s=seq
+    n=len(s)
+    m={}
+    for i in range(n-k+1):
+        ss=s[i:i+k]
+        ll=neighbors(ss,d)
+        for x in ll:
+            if x not in m: m[x]=0
+            m[x]+=1
+    mm=max(m.values())
+    lis=[]
+    for p,v in m.items():
+        if v==mm: lis.append(p)
+    return lis
 
-def better_frequent_kmers_with_rc(sequence, k, max_distance):
-    # returns max frequency kmers including reverse complements
-    dna_sequence = sequence
-    sequence_length = len(dna_sequence)
-    kmer_frequencies = {}
-    for i in range(sequence_length - k + 1):
-        current_kmer = dna_sequence[i:i + k]
-        reverse_kmer = reverse_complement(current_kmer)
-        kmer_neighbors = neighbors(current_kmer, max_distance)
-        reverse_neighbors = neighbors(reverse_kmer, max_distance)
-        for neighbor in kmer_neighbors:
-            if neighbor not in kmer_frequencies: kmer_frequencies[neighbor] = 0
-            kmer_frequencies[neighbor] += 1
-        for neighbor in reverse_neighbors:
-            if neighbor not in kmer_frequencies: kmer_frequencies[neighbor] = 0
-            kmer_frequencies[neighbor] += 1
-    max_frequency = max(kmer_frequencies.values())
-    top_kmers = []
-    for kmer, frequency in kmer_frequencies.items():
-        if frequency == max_frequency: top_kmers.append(kmer)
-    return top_kmers
+def better_frequent_kmers_with_rc(seq,k,d):
+    # returns max frequency kmers with hamming distance to sequence atmost d including reverse compliments
+    s=seq
+    n=len(s)
+    m={}
+    for i in range(n-k+1):
+        ss=s[i:i+k]
+        rss=reverse_complement(ss)
+        ll=neighbors(ss,d)
+        rll=neighbors(rss,d)
+        for x in ll:
+            if x not in m: m[x]=0
+            m[x]+=1
+        for x in rll:
+            if x not in m: m[x]=0
+            m[x]+=1
+    mm=max(m.values())
+    lis=[]
+    for p,v in m.items():
+        if v==mm: lis.append(p)
+    return lis
 
-def motif_enumeration(sequence_list, k, max_distance):
-    # returns all kmers with hamming distance at most max_distance to each sequence
-    initial_patterns = set()
-    for sequence in sequence_list:
-        for i in range(len(sequence) - k + 1):
-            initial_patterns.add(sequence[i:i + k])
-    expanded_patterns = set()
-    for pattern in initial_patterns:
-        for variant in neighbors(pattern, max_distance): 
-            expanded_patterns.add(variant)
-    valid_motifs = set()
-    for candidate in expanded_patterns:
-        is_valid = True
-        for sequence in sequence_list:
-            if len(approximate_pattern_matching(sequence, candidate, max_distance)) == 0:
-                is_valid = False
+def motif_enumeration(seq_list,k,d):
+    # returns all kmeres with hamming distance atmost d to each sequence in the list
+    pat=set()
+    for s in seq_list:
+        for i in range(len(s)-k+1):
+            pat.add(s[i:i+k])
+    lis=set()
+    for s in pat:
+        for ss in neighbors(s,d): lis.add(ss)
+    ans=set()
+    for s in lis:
+        for seq in seq_list:
+            f=1
+            if len(approximate_pattern_matching(seq,s,d))==0:
+                f=0
                 break
-        if is_valid: valid_motifs.add(candidate)
-    return list(valid_motifs)
+        if f==1: ans.add(s)
+    return list(ans)
+        
+def pattern_and_list_distance(seq_list,pat):
+    # returns sum of hamming distances from pattern to all sequences in the list
+    ss=pat
+    ans=0
+    k=len(ss)
+    for s in seq_list:
+        n=len(s)
+        dist=n
+        for i in range(n-k+1):
+            a=hamming_distance(ss,s[i:i+k])
+            if dist>a: dist=a
+        ans+=dist
+    return ans
 
-def pattern_and_list_distance(sequence_list, pattern):
-    # returns sum of hamming distances from pattern to all sequences
-    search_pattern = pattern
-    total_distance = 0
-    pattern_length = len(search_pattern)
-    for sequence in sequence_list:
-        sequence_length = len(sequence)
-        min_distance = sequence_length
-        for i in range(sequence_length - pattern_length + 1):
-            current_distance = hamming_distance(search_pattern, sequence[i:i + pattern_length])
-            if current_distance < min_distance: 
-                min_distance = current_distance
-        total_distance += min_distance
-    return total_distance
+def nucleotide_bases_permutations(n):
+    # returns all possible dna sequences of length n
+    b=['A','C','G','T']
+    l1=['',]
+    l2=[]
+    for i in range(n):
+        for s in l1:
+            for bb in b:
+                l2.append(s+bb)
+        l1=l2.copy()
+        l2=[]
+    return l1
 
-def nucleotide_bases_permutations(length):
-    # returns all possible dna sequences of given length
-    bases = ['A','C','G','T']
-    current_strings = ['',]
-    next_strings = []
-    for i in range(length):
-        for s in current_strings:
-            for base in bases:
-                next_strings.append(s + base)
-        current_strings = next_strings.copy()
-        next_strings = []
-    return current_strings
-
-def median_string(sequence_list, k):
-    # returns kmers with least sum of hamming distances to all sequences
-    all_possible_kmers = nucleotide_bases_permutations(k)
-    best_kmers = []
-    min_total_distance = len(sequence_list) * k
-    distance_map = {}
-    for kmer in all_possible_kmers:
-        current_distance = pattern_and_list_distance(sequence_list, kmer)
-        distance_map[kmer] = current_distance
-    min_distance = min(distance_map.values())
-    for kmer, distance in distance_map.items():
-        if distance == min_distance: best_kmers.append(kmer)
-    return best_kmers
+def median_string(seq_list,k):
+    # returns list of kmers with least sum of hamming distances to all sequences in the list
+    ll=nucleotide_bases_permutations(k)
+    ans=[]
+    d=len(seq_list)*k
+    m={}
+    for ss in ll:
+        dd=pattern_and_list_distance(seq_list,ss)
+        m[ss]=dd
+    mi=min(m.values())
+    for p,v in m.items():
+        if v==mi: ans.append(p)
+    return ans
 
 def profile_without_pseudocounts(motifs):
-    motif_collection = motifs
-    num_motifs = len(motif_collection)
-    motif_length = len(motif_collection[0])
-    profile = {'A':[0]*motif_length, 'C':[0]*motif_length, 
-               'G':[0]*motif_length, 'T':[0]*motif_length}
-    for pos in range(motif_length):
-        for motif in motif_collection:
-            profile[motif[pos]][pos] += 1
-    for base in 'ACGT':
-        for pos in range(motif_length):
-            profile[base][pos] /= num_motifs
-    profile_matrix = [profile[base] for base in 'ACGT']
-    return profile_matrix
+    s=motifs
+    n=len(s)
+    k=len(s[0])
+    m={'A':[0]*k,'C':[0]*k,'G':[0]*k,'T':[0]*k}
+    for i in range(k):
+        for j in range(n):
+            m[s[j][i]][i]+=1
+    for i in 'ACGT':
+        for j in range(k):
+            m[i][j]/=n
+    lis=[m[key] for key in 'ACGT']
+    return lis
+    
 
 def profile_with_pseudocounts(motifs):
-    motif_collection = motifs
-    num_motifs = len(motif_collection)
-    motif_length = len(motif_collection[0])
-    profile = {'A':[1]*motif_length, 'C':[1]*motif_length,
-               'G':[1]*motif_length, 'T':[1]*motif_length}
-    for pos in range(motif_length):
-        for motif in motif_collection:
-            profile[motif[pos]][pos] += 1
-    for base in 'ACGT':
-        for pos in range(motif_length):
-            profile[base][pos] /= (num_motifs + 4)
-    profile_matrix = [profile[base] for base in 'ACGT']
-    return profile_matrix
+    s=motifs
+    n=len(s)
+    k=len(s[0])
+    m={'A':[1]*k,'C':[1]*k,'G':[1]*k,'T':[1]*k}
+    for i in range(k):
+        for j in range(n):
+            m[s[j][i]][i]+=1
+    for i in 'ACGT':
+        for j in range(k):
+            m[i][j]/=(n+4)
+    lis=[m[key] for key in 'ACGT']
+    return lis
 
-def profile_most_probable_kmer(profile, sequence, k):
-    dna_sequence = sequence
-    sequence_length = len(dna_sequence)
-    max_probability = 0
-    best_kmer = dna_sequence[:k]
-    base_index = {'A':0, 'C':1, 'G':2, 'T':3}
-    for i in range(sequence_length - k + 1):
-        current_kmer = dna_sequence[i:i + k]
-        probability = 1
-        for pos in range(k):
-            probability *= profile[base_index[current_kmer[pos]]][pos]
-        if probability > max_probability:
-            max_probability = probability
-            best_kmer = current_kmer
-    return best_kmer
+def profile_most_probable_kmer(profile,seq,k):
+    s=seq
+    n=len(s)
+    mx=0
+    ans=s[:k]
+    m={'A':0,'C':1,'G':2,'T':3}
+    for i in range(n-k+1):
+        ss=s[i:i+k]
+        d=1
+        for j in range(0,k):
+            d*=profile[m[ss[j]]][j]
+        if d>mx:
+            mx=d
+            ans=ss
+    return ans
 
-def profile_kmer_probabilities(profile, sequence, k):
-    dna_sequence = sequence
-    sequence_length = len(dna_sequence)
-    probabilities = []
-    base_index = {'A':0, 'C':1, 'G':2, 'T':3}
-    for i in range(sequence_length - k + 1):
-        current_kmer = dna_sequence[i:i + k]
-        probability = 1
-        for pos in range(k):
-            probability *= profile[base_index[current_kmer[pos]]][pos]
-        probabilities.append(probability)
-    return probabilities
+def profile_kmer_probabilities(profile,seq,k):
+    s=seq
+    n=len(s)
+    lis=[]
+    m={'A':0,'C':1,'G':2,'T':3}
+    for i in range(n-k+1):
+        ss=s[i:i+k]
+        d=1
+        for j in range(0,k):
+            d*=profile[m[ss[j]]][j]
+        lis.append(d)
+    return lis
 
-def consensus(motifs):
+def consensus(l):
     # returns consensus for a given list of motifs
-    num_motifs = len(motifs)
-    motif_length = len(motifs[0])
-    consensus_sequence = ''
-    for pos in range(motif_length):
-        a_count = t_count = g_count = c_count = 0
-        for motif in motifs:
-            if motif[pos] == 'A': a_count += 1
-            elif motif[pos] == 'T': t_count += 1
-            elif motif[pos] == 'G': g_count += 1
-            else: c_count += 1
-        max_count = max(a_count, t_count, g_count, c_count)
-        if max_count == a_count: consensus_sequence += 'A'
-        elif max_count == c_count: consensus_sequence += 'C'
-        elif max_count == g_count: consensus_sequence += 'G'
-        else: consensus_sequence += 'T'
-    return consensus_sequence
+    n=len(l)
+    m=len(l[0])
+    con=''
+    for i in range(m):
+        a,t,g,c=0,0,0,0
+        for j in range(n):
+            if l[j][i]=='A': a+=1
+            elif l[j][i]=='T': t+=1
+            elif l[j][i]=='G': g+=1
+            else: c+=1
+        e=max(a,t,g,c)
+        if e==a: con+='A'
+        elif e==c: con+='C'
+        elif e==g: con+='G'
+        else: con+='T'
+    return con
 
-def score_of_motifs(motifs, consensus_seq):
+def score_of_motifs(l,con):
     # returns score for a given list of motifs and consensus
-    score = 0
-    num_motifs = len(motifs)
-    motif_length = len(motifs[0])
-    for pos in range(motif_length):
-        for motif in motifs:
-            if motif[pos] != consensus_seq[pos]: score += 1
-    return score
+    ans=0
+    n=len(l)
+    m=len(l[0])
+    for i in range(m):
+        for j in range(n):
+            if l[j][i]!=con[i]: ans+=1
+    return ans
 
-def greedy_motif_search_with_pseudocounts(sequence_list, k):
-    num_sequences = len(sequence_list)
-    sequences = sequence_list
-    best_motifs = []
-    for seq in sequences: best_motifs.append(seq[:k])
-    best_score = score_of_motifs(best_motifs, consensus(best_motifs))
-    for i in range(len(sequence_list[0]) - k + 1):
-        current_motifs = []
-        counts = {'A':[0]*k, 'C':[0]*k, 'G':[0]*k, 'T':[0]*k}
-        initial_kmer = sequences[0][i:i + k]
-        for pos in range(k):
-            counts[initial_kmer[pos]][pos] += 1
-        current_motifs.append(initial_kmer)
-        for t in range(1, num_sequences):
-            profile = [counts[base] for base in 'ACGT']
-            for row in range(len(profile)):
-                for col in range(len(profile[0])):
-                    profile[row][col] += 1
-            next_motif = profile_most_probable_kmer(profile, sequences[t], k)
-            current_motifs.append(next_motif)
-            for pos in range(k):
-                counts[next_motif[pos]][pos] += 1
-        current_score = score_of_motifs(current_motifs, consensus(current_motifs))
-        if current_score < best_score:
-            best_score = current_score
-            best_motifs = current_motifs.copy()
+
+def greedy_motif_search_with_pseudocounts(seq_list,k):
+    n=len(seq_list)
+    s=seq_list
+    best_motifs=[]
+    for ss in s: best_motifs.append(ss[:k])
+    best_score=score_of_motifs(best_motifs,consensus(best_motifs))
+    for i in range(len(seq_list[0])-k+1):
+        motifs=[]
+        count={'A':[0]*k,'C':[0]*k,'G':[0]*k,'T':[0]*k}
+        ss=s[0][i:i+k]
+        for j in range(k):
+            count[ss[j]][j]+=1
+        motifs.append(ss)
+        for t in range(1,n):
+            lis=[count[key] for key in 'ACGT']
+            for xx in range(len(lis)):
+                for yy in range(len(lis[0])):
+                    lis[xx][yy]+=1
+            p=profile_most_probable_kmer(lis,s[t],k)
+            motifs.append(p)
+            for j in range(k):
+                count[p[j]][j]+=1
+        sc=score_of_motifs(motifs,consensus(motifs))
+        if sc<best_score:
+            best_score=sc
+            best_motifs=motifs.copy()
     return best_motifs
 
-def randomized_motif_search(sequence_list, k):
+def randomized_motif_search(seq_list,k):
     # returns best_motifs and its score
-    sequences = sequence_list
-    num_sequences = len(sequence_list)
-    sequence_length = len(sequences[0])
-    best_motifs = []
-    for i in range(num_sequences):
-        start = random.randint(0, sequence_length - k)
-        best_motifs.append(sequences[i][start:start + k])
-    best_profile = profile_with_pseudocounts(best_motifs)
+    s=seq_list
+    t=len(seq_list)
+    n=len(s[0])
+    best_motifs=[]
+    for i in range(t):
+        a=random.randint(0,n-k)
+        best_motifs.append(s[i][a:a+k])
+    best_profile=profile_with_pseudocounts(best_motifs)
     while True:
-        current_motifs = []
-        for i in range(num_sequences):
-            current_motifs.append(profile_most_probable_kmer(best_profile, sequences[i], k))
-        current_profile = profile_with_pseudocounts(current_motifs)
-        best_motif_score = score_of_motifs(best_motifs, consensus(best_motifs))
-        current_score = score_of_motifs(current_motifs, consensus(current_motifs))
-        if current_score < best_motif_score:
-            best_motifs = current_motifs.copy()
-            best_profile = copy.deepcopy(current_profile)
+        motifs=[]
+        for i in range(t):
+            motifs.append(profile_most_probable_kmer(best_profile,s[i],k))
+        profile=profile_with_pseudocounts(motifs)
+        best_score=score_of_motifs(best_motifs,consensus(best_motifs))
+        score=score_of_motifs(motifs,consensus(motifs))
+        if score<best_score:
+            best_motifs=motifs.copy()
+            best_profile=copy.deepcopy(profile)
         else:
-            return best_motifs, best_motif_score
+            return best_motifs,best_score
 
-def gibbs_sampler(sequence_list, k, iterations):
-    sequences = sequence_list
-    num_sequences = len(sequence_list)
-    sequence_length = len(sequences[0])
-    best_motifs = []
-    for i in range(num_sequences):
-        start = random.randint(0, sequence_length - k)
-        best_motifs.append(sequences[i][start:start + k])
-    best_score = score_of_motifs(best_motifs, consensus(best_motifs))
-    current_motifs = best_motifs.copy()
-    for _ in range(iterations):
-        excluded_index = random.randint(0, num_sequences - 1)
-        del current_motifs[excluded_index]
-        profile = profile_with_pseudocounts(current_motifs)
-        positions = []
-        probabilities = profile_kmer_probabilities(profile, sequences[excluded_index], k)
-        chosen_position = random.choices(range(len(probabilities)), weights=probabilities, k=1)[0]
-        current_motifs.insert(excluded_index, sequences[excluded_index][chosen_position:chosen_position + k])
-        current_score = score_of_motifs(current_motifs, consensus(current_motifs))
-        if current_score < best_score:
-            best_motifs = current_motifs.copy()
-            best_score = current_score
-    return best_motifs, best_score
+def gibbs_sampler(seq_list,k,N):
+    s=seq_list
+    t=len(seq_list)
+    n=len(s[0])
+    best_motifs=[]
+    for i in range(t):
+        a=random.randint(0,n-k)
+        best_motifs.append(s[i][a:a+k])
+    best_score=score_of_motifs(best_motifs,consensus(best_motifs))
+    motifs=[]
+    motifs=best_motifs.copy()
+    for q in range(N):
+        a=random.randint(0,t-1)
+        del motifs[a]
+        profile=profile_with_pseudocounts(motifs)
+        ll=[]
+        for i in range(n-k+1): ll.append(i)
+        x=random.choices(ll,weights=profile_kmer_probabilities(profile,s[a],k),k=1)
+        x=x[0]
+        motifs.insert(a,s[a][x:x+k])
+        score=score_of_motifs(motifs,consensus(motifs))
+        if score<best_score:
+            best_motifs=motifs.copy()
+            best_score=score
+    return best_motifs,best_score
+

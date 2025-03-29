@@ -11,7 +11,7 @@ codon_to_aa = {
     'CUA': 'L', 'CUC': 'L', 'CUG': 'L', 'CUU': 'L',
     'GAA': 'E', 'GAC': 'D', 'GAG': 'E', 'GAU': 'D',
     'GCA': 'A', 'GCC': 'A', 'GCG': 'A', 'GCU': 'A',
-    'GGA': 'G', 'GGC': 'G', 'GGA': 'G', 'GGU': 'G',
+    'GGA': 'G', 'GGC': 'G', 'GGG': 'G', 'GGU': 'G',
     'GUA': 'V', 'GUC': 'V', 'GUG': 'V', 'GUU': 'V',
     'UAA': 'Stop', 'UAC': 'Y', 'UAG': 'Stop', 'UAU': 'Y',
     'UCA': 'S', 'UCC': 'S', 'UCG': 'S', 'UCU': 'S',
@@ -43,448 +43,448 @@ aa_to_codon = {
     'Stop': ['UAA', 'UAG', 'UGA']
 }
 
-amino_acid_mass = {
-    'G': 57, 'A': 71, 'S': 87, 'P': 97, 'V': 99, 'T': 101, 
-    'C': 103, 'I': 113, 'L': 113, 'N': 114, 'D': 115, 
-    'K': 128, 'Q': 128, 'E': 129, 'M': 131, 'H': 137, 
-    'F': 147, 'R': 156, 'Y': 163, 'W': 186
+amino_acid_mass = {'G': 57, 'A': 71, 'S': 87, 'P': 97, 'V': 99, 'T': 101, 'C': 103, 'I': 113, 'L': 113, 'N': 114, 'D': 115, 'K': 128, 'Q': 128, 'E': 129, 'M': 131, 'H': 137, 'F': 147, 'R': 156, 'Y': 163, 'W': 186}
+
+amino_weights = {57,71,87,97,99,101,103,113,114,115,128,129,131,137,147,156,163,186}
+
+
+rm = {
+    57: 'G', 71: 'A', 87: 'S', 97: 'P', 99: 'V', 101: 'T', 103: 'C', 113: 'L', 114: 'N', 115: 'D', 128: 'K', 129: 'E', 131: 'M', 137: 'H', 147: 'F', 156: 'R', 163: 'Y', 186: 'W'
 }
 
-amino_weights = {57, 71, 87, 97, 99, 101, 103, 113, 114, 115, 128, 129, 131, 137, 147, 156, 163, 186}
 
-mass_to_aa = {
-    57: 'G', 71: 'A', 87: 'S', 97: 'P', 99: 'V', 101: 'T', 
-    103: 'C', 113: 'L', 114: 'N', 115: 'D', 128: 'K', 
-    129: 'E', 131: 'M', 137: 'H', 147: 'F', 156: 'R', 
-    163: 'Y', 186: 'W'
-}
-
-def output_file(output_list):
+def output_file(lis):
+    n=len(lis)
     with open("output.txt", "a") as file:
-        for item in output_list:
-            file.write(f"{item} ")
+        for i in range(n):
+            file.write(f"{lis[i]} ")  
 
-def input_file(file_path):
-    with open(file_path, "r") as file:
+def input_file(path):
+    with open(path, "r") as file:
         content = file.read()
-    return content.split()
+    lis = content.split()
+    return lis
 
-def sequence_composition(sequence, k):
-    kmer_list = []
-    for i in range(len(sequence) - k + 1):
-        kmer_list.append(sequence[i:i+k])
-    return kmer_list
+def sequence_composition(seq,k):
+    lis=[]
+    for i in range(len(seq)-k+1): lis.append(seq[i:i+k])
+    return lis
 
-def ordered_kmers_to_sequence(kmer_list):
-    assembled_sequence = kmer_list[0]
-    k = len(kmer_list[0])
-    for i in range(1, len(kmer_list)):
-        assembled_sequence += kmer_list[i][k-1]
-    return assembled_sequence
+def ordered_kmers_to_sequence(seq_list):
+    n=len(seq_list)
+    k=len(seq_list[0])
+    s=seq_list[0]
+    for i in range(1,n): s+=seq_list[i][k-1]
+    return s
 
-def overlap_graph(kmer_list):
-    prefix_map = {}
-    k = len(kmer_list[0])
-    for kmer in kmer_list:
-        prefix = kmer[:k-1]
-        if prefix not in prefix_map:
-            prefix_map[prefix] = []
-        prefix_map[prefix].append(kmer)
-    
-    graph_edges = {}
-    for kmer in kmer_list:
-        suffix = kmer[1:]
-        if suffix not in prefix_map:
-            continue
-        if suffix == kmer[:k-1]:
-            prefix_map[suffix].remove(kmer)
-        graph_edges[kmer] = prefix_map[suffix]
-    return graph_edges
+def overlap_graph(seq_list):
+    n=len(seq_list)
+    k=len(seq_list[0])
+    m={}
+    for s in seq_list:
+        a=s[:k-1]
+        if a not in m: m[a]=[]
+        m[a].append(s)
+    mm={}
+    for s in seq_list:
+        a=s[1:]
+        if a not in m: continue
+        if s[1:]==s[:k-1]: m[a].remove(s)
+        mm[s]=m[a]
+    return mm
 
-def debruijn_graph(kmer_list):
-    adjacency_map = {}
-    k = len(kmer_list[0])
-    for kmer in kmer_list:
-        prefix = kmer[:k-1]
-        if prefix not in adjacency_map:
-            adjacency_map[prefix] = []
-        adjacency_map[prefix].append(kmer[1:])
-    
-    edge_list = []
-    for prefix, suffixes in adjacency_map.items():
-        for suffix in suffixes:
-            edge_list.append((prefix, suffix))
-    return edge_list
+def debruijn_graph(seq_list):
+    m={}
+    n=len(seq_list)
+    k=len(seq_list[0])
+    for s in seq_list:
+        a=s[:k-1]
+        if a not in m: m[a]=[]
+        m[a].append(s[1:])
+    # return m
+    # to return edge list instead of adj map
+    e=[]
+    for k,v in m.items():
+        for x in v:
+            e.append((k,x))
+    return e
 
-def paired_debruijn_graph(paired_kmer_list):
-    adjacency_map = {}
-    k = len(paired_kmer_list[0][0])
-    for pair in paired_kmer_list:
-        prefix_a = pair[0][:k-1]
-        prefix_b = pair[1][:k-1]
-        if (prefix_a, prefix_b) not in adjacency_map:
-            adjacency_map[(prefix_a, prefix_b)] = []
-        adjacency_map[(prefix_a, prefix_b)].append((pair[0][1:], pair[1][1:]))
-    
-    edge_list = []
-    for prefix_pair, suffix_pairs in adjacency_map.items():
-        for suffix_pair in suffix_pairs:
-            edge_list.append((prefix_pair, suffix_pair))
-    return edge_list
+def paired_debruijn_graph(seq_list):
+    m={}
+    n=len(seq_list)
+    k=len(seq_list[0][0])
+    for s in seq_list:
+        a=s[0][:k-1]
+        b=s[1][:k-1]
+        if (a,b) not in m: m[(a,b)]=[]
+        m[(a,b)].append((s[0][1:],s[1][1:]))
+    # return m
+    # to return edge list instead of adj map
+    e=[]
+    for k,v in m.items():
+        for x in v:
+            e.append((k,x))
+    return e
 
 def eulerian_path(edge_list):
-    graph = nx.DiGraph()
-    graph.add_edges_from(edge_list)
-    return list(nx.eulerian_path(graph))
+    # edge list is a list of tuples. eg: [(0, 1), (1, 2), (2, 0), (0, 3), (3, 1)]
+    G = nx.DiGraph()
+    G.add_edges_from(edge_list)
+    path = list(nx.eulerian_path(G))
+    return path
 
-def path_to_sequence(path):
-    sequence = path[0][0]
-    k = len(path[0][0])
-    for i in range(1, len(path)):
-        sequence += path[i][0][k-1]
-    sequence += path[-1][1][k-1]
-    return sequence
+def path_to_seq(path):
+    s=path[0][0]
+    n=len(path)
+    k=len(path[0][0])
+    for i in range(1,n): s+=path[i][0][k-1]
+    s+=path[n-1][1][k-1]
+    return s
 
-def paired_path_to_sequence(path, d):
-    n = len(path)
-    k = len(path[0][0][0])
-    size = 2*(k+1) + n + d - 1
-    forward = [-1] * size
-    backward = [-1] * size
-    
-    forward_ptr = k
-    backward_ptr = size - k - 1
-    
-    for i in range(k):
-        forward[i] = path[0][0][0][i]
-    for i in range(k-1, -1, -1):
-        backward[size + i - k] = path[n-1][1][1][i]
-    
-    for i in range(1, n):
-        forward[forward_ptr] = path[i][0][0][k-1]
-        forward_ptr += 1
-    forward[forward_ptr] = path[n-1][1][0][k-1]
-    
-    for i in range(n-2, -1, -1):
-        backward[backward_ptr] = path[i][1][1][0]
-        backward_ptr -= 1
-    backward[backward_ptr] = path[0][0][1][0]
-    
-    result = ''
+def paired_path_to_seq(path,d):
+    n=len(path)
+    k=len(path[0][0][0])
+    size=2*(k+1)+n+d-1
+    f=[-1 for i in range(size)]
+    b=[-1 for i in range(size)]
+    ff=k
+    bb=size-k-1
+    for i in range(k): f[i]=path[0][0][0][i]
+    for i in range(k-1,-1,-1): b[size+i-k]=path[n-1][1][1][i]
+    for i in range(1,n):
+        f[ff]=path[i][0][0][k-1]
+        ff+=1
+    f[ff]=path[n-1][1][0][k-1]
+    for i in range(n-2,-1,-1):
+        b[bb]=path[i][1][1][0]
+        bb-=1
+    b[bb]=path[0][0][1][0]
+    ans=''
     for i in range(size):
-        if forward[i] == -1 and backward[i] == -1:
+        if f[i]==-1 and b[i]==-1:
             print("both -1")
-        elif forward[i] == -1:
-            result += backward[i]
-        elif backward[i] == -1:
-            result += forward[i]
-        elif forward[i] != backward[i]:
+        elif f[i]==-1:
+            ans+=b[i]
+        elif b[i]==-1:
+            ans+=f[i]
+        elif f[i]!=b[i]:
             print("not -1 but not equal")
         else:
-            result += forward[i]
-    return result
+            ans+=f[i]
+    return ans
 
-def contigs_from_kmers(kmer_list):
-    k = len(kmer_list[0])
-    contigs = []
-    adjacency_map = {}
-    
-    for kmer in kmer_list:
-        prefix = kmer[:k-1]
-        if prefix not in adjacency_map:
-            adjacency_map[prefix] = []
-        adjacency_map[prefix].append(kmer[1:])
-    
-    in_degree = {}
-    out_degree = {}
-    for prefix, suffixes in adjacency_map.items():
-        out_degree[prefix] = len(suffixes)
-        for suffix in suffixes:
-            if suffix not in in_degree:
-                in_degree[suffix] = 0
-            in_degree[suffix] += 1
-    
-    for node in adjacency_map:
-        if in_degree.get(node, 0) == out_degree.get(node, 0) == 1:
-            continue
-        
-        current_node = node
-        while adjacency_map.get(current_node, []):
-            contig = current_node
-            next_node = adjacency_map[current_node].pop()
-            
-            while in_degree.get(next_node, 0) == out_degree.get(next_node, 0) == 1:
-                contig += next_node[-1]
-                next_node = adjacency_map[next_node][0]
-            
-            contig += next_node[-1]
-            contigs.append(contig)
-    
-    return contigs
+def contigs_from_kmers(ll):
+    t=len(ll)
+    p=len(ll[0])
+    ans=[]
+    m={}
+    for s in ll:
+        if s[:p-1] not in m: m[s[:p-1]]=[]
+        m[s[:p-1]].append(s[1:])
+    n = len(m.items())
+    indeg={}
+    outdeg={}
+    nice={}
+    for k,v in m.items():
+        outdeg[k]=len(v)
+        for x in v:
+            if x not in indeg: indeg[x]=0
+            indeg[x]+=1
+    for k,v in indeg.items():
+        if k in outdeg:
+            if v==outdeg[k] and v==1:
+                nice[k]=1
+    for k,v in m.items():
+        if k in nice: continue
+        kk=k
+        while len(v):
+            s=kk
+            k=v.pop()
+            while k in nice:
+                s+=k[p-2]
+                k=m[k][0]
+            s+=k[p-2]
+            ans.append(s)
+    return ans
 
-def rna_to_peptide(rna_sequence):
-    peptide = ''
-    for i in range(0, len(rna_sequence), 3):
-        codon = rna_sequence[i:i+3]
-        amino_acid = codon_to_aa[codon]
-        if amino_acid == 'Stop':
-            continue
-        peptide += amino_acid
-    return peptide
+def rna_to_peptide(s):
+    n=len(s)
+    ans=''
+    for i in range(0,n,3):
+        x=codon_to_aa[s[i:i+3]]
+        if x=='Stop': continue
+        ans+=x
+    return ans
 
-def peptide_to_rna(peptide):
-    possible_rna = []
-    for amino_acid in peptide:
-        codons = aa_to_codon[amino_acid]
-        if not possible_rna:
-            possible_rna = codons.copy()
+def peptide_to_rna(s):
+    ans=[]
+    f=0
+    for a in s:
+        temp=[]
+        if f==0:
+            f=1
+            l=aa_to_codon[a]
+            for ss in l:
+                temp.append(ss)
         else:
-            new_rna = []
-            for rna in possible_rna:
-                for codon in codons:
-                    new_rna.append(rna + codon)
-            possible_rna = new_rna
-    return possible_rna
+            for i in range(len(ans)):
+                l=aa_to_codon[a]
+                for ss in l:
+                    temp.append(ans[i]+ss)
+        ans=temp.copy()
+    return ans
 
-def cycle_spectrum_of_peptide(peptide):
-    n = len(peptide)
-    spectrum = [0]
-    prefix_mass = [0] * (n + 1)
-    
-    for i in range(1, n + 1):
-        prefix_mass[i] = prefix_mass[i-1] + amino_acid_mass[peptide[i-1]]
-        spectrum.append(prefix_mass[i])
-    
-    for length in range(1, n):
-        for start in range(n):
-            if start == 0:
-                current_mass = prefix_mass[length]
+def cycle_spectrum_of_peptide(s):
+    n=len(s)
+    ans=[]
+    ans.append(0)
+    lis=[0 for i in range(n+1)]
+    for i in range(1,n+1):
+        lis[i]=lis[i-1]+amino_acid_mass[s[i-1]]
+        ans.append(lis[i])
+    for k in range(1,n):
+        for b in range(0,n):
+            if b==0:
+                sum=lis[k]
+                continue
+            sum+=amino_acid_mass[s[(b+k-1)%n]]
+            sum-=amino_acid_mass[s[b-1]]
+            ans.append(sum)
+    ans.sort()
+    return ans
+
+def linear_spectrum_of_peptide(s):
+    n=len(s)
+    ans=[]
+    ans.append(0)
+    lis=[0 for i in range(n+1)]
+    for i in range(1,n+1):
+        lis[i]=lis[i-1]+amino_acid_mass[s[i-1]]
+        ans.append(lis[i])
+    for k in range(1,n):
+        for b in range(0,n):
+            if b==0:
+                sum=lis[k]
+                continue
+            if b+k-1>=n: break
+            sum+=amino_acid_mass[s[b+k-1]]
+            sum-=amino_acid_mass[s[b-1]]
+            ans.append(sum)
+    ans.sort()
+    return ans
+
+def cycle_spectrum_of_peptide_weights(ll):
+    n=len(ll)
+    ans=[]
+    ans.append(0)
+    lis=[0 for i in range(n+1)]
+    for i in range(1,n+1):
+        lis[i]=lis[i-1]+ll[i-1]
+        ans.append(lis[i])
+    for k in range(1,n):
+        for b in range(0,n):
+            if b==0:
+                sum=lis[k]
+                continue
+            sum+=ll[(b+k-1)%n]
+            sum-=ll[b-1]
+            ans.append(sum)
+    ans.sort()
+    return ans
+
+def linear_spectrum_of_peptide_weights(ll):
+    n=len(ll)
+    ans=[]
+    ans.append(0)
+    lis=[0 for i in range(n+1)]
+    for i in range(1,n+1):
+        lis[i]=lis[i-1]+ll[i-1]
+        ans.append(lis[i])
+    for k in range(1,n):
+        for b in range(0,n):
+            if b==0:
+                sum=lis[k]
+                continue
+            if b+k-1>=n: break
+            sum+=ll[b+k-1]
+            sum-=ll[b-1]
+            ans.append(sum)
+    ans.sort()
+    return ans
+
+def expand_peptides(ll):
+    weights = amino_weights
+    ans=[]
+    for new in weights:
+        for lis in ll:
+            ans.append(lis+[new])
+    ans.sort()
+    return ans
+
+def cyclopeptide_sequencing(lis):
+    # handling duplicates might be wrong
+    pep=[]
+    pep.append([])
+    ans=[]
+    lis.sort()
+    s=set(lis)
+    while len(pep):
+        pepp = expand_peptides(pep)
+        pep=[]
+        # print(pepp)
+        for p in pepp:
+            pep.append(p)
+            if set(cycle_spectrum_of_peptide_weights(p))==s and p not in ans:
+                ans.append(p)
+                pep.remove(p)
             else:
-                current_mass += amino_acid_mass[peptide[(start + length - 1) % n]]
-                current_mass -= amino_acid_mass[peptide[start - 1]]
-            spectrum.append(current_mass)
-    
-    spectrum.sort()
-    return spectrum
+                f=0
+                for x in linear_spectrum_of_peptide_weights(p):
+                    if x not in s:
+                        f=1
+                if f==1: pep.remove(p)
+    return ans
 
-def linear_spectrum_of_peptide(peptide):
-    n = len(peptide)
-    spectrum = [0]
-    prefix_mass = [0] * (n + 1)
-    
-    for i in range(1, n + 1):
-        prefix_mass[i] = prefix_mass[i-1] + amino_acid_mass[peptide[i-1]]
-        spectrum.append(prefix_mass[i])
-    
-    for length in range(1, n):
-        for start in range(n):
-            if start + length - 1 >= n:
-                break
-            if start == 0:
-                current_mass = prefix_mass[length]
-            else:
-                current_mass += amino_acid_mass[peptide[start + length - 1]]
-                current_mass -= amino_acid_mass[peptide[start - 1]]
-            spectrum.append(current_mass)
-    
-    spectrum.sort()
-    return spectrum
-
-def cycle_spectrum_of_peptide_weights(weights):
-    n = len(weights)
-    spectrum = [0]
-    prefix_mass = [0] * (n + 1)
-    
-    for i in range(1, n + 1):
-        prefix_mass[i] = prefix_mass[i-1] + weights[i-1]
-        spectrum.append(prefix_mass[i])
-    
-    for length in range(1, n):
-        for start in range(n):
-            if start == 0:
-                current_mass = prefix_mass[length]
-            else:
-                current_mass += weights[(start + length - 1) % n]
-                current_mass -= weights[start - 1]
-            spectrum.append(current_mass)
-    
-    spectrum.sort()
-    return spectrum
-
-def linear_spectrum_of_peptide_weights(weights):
-    n = len(weights)
-    spectrum = [0]
-    prefix_mass = [0] * (n + 1)
-    
-    for i in range(1, n + 1):
-        prefix_mass[i] = prefix_mass[i-1] + weights[i-1]
-        spectrum.append(prefix_mass[i])
-    
-    for length in range(1, n):
-        for start in range(n):
-            if start + length - 1 >= n:
-                break
-            if start == 0:
-                current_mass = prefix_mass[length]
-            else:
-                current_mass += weights[start + length - 1]
-                current_mass -= weights[start - 1]
-            spectrum.append(current_mass)
-    
-    spectrum.sort()
-    return spectrum
-
-def expand_peptides(peptide_list):
-    expanded_peptides = []
-    for peptide in peptide_list:
-        for mass in amino_weights:
-            expanded_peptides.append(peptide + [mass])
-    expanded_peptides.sort()
-    return expanded_peptides
-
-def cyclopeptide_sequencing(spectrum):
-    candidate_peptides = [[]]
-    final_peptides = []
-    target_spectrum = set(spectrum)
-    
-    while candidate_peptides:
-        candidate_peptides = expand_peptides(candidate_peptides)
-        new_candidates = []
-        
-        for peptide in candidate_peptides:
-            peptide_spectrum = set(cycle_spectrum_of_peptide_weights(peptide))
-            if peptide_spectrum == target_spectrum:
-                if peptide not in final_peptides:
-                    final_peptides.append(peptide)
-            else:
-                linear_spectrum = linear_spectrum_of_peptide_weights(peptide)
-                if all(mass in target_spectrum for mass in linear_spectrum):
-                    new_candidates.append(peptide)
-        
-        candidate_peptides = new_candidates
-    
-    return final_peptides
-
-def peptide_spectrum_score(peptide, spectrum):
-    theoretical_spectrum = cycle_spectrum_of_peptide(peptide)
-    spectrum_counts = {}
-    theoretical_counts = {}
-    
-    for mass in theoretical_spectrum:
-        if mass > max(spectrum):
-            return 0
-        theoretical_counts[mass] = theoretical_counts.get(mass, 0) + 1
-    
-    for mass in spectrum:
-        spectrum_counts[mass] = spectrum_counts.get(mass, 0) + 1
-    
-    score = 0
-    for mass, count in theoretical_counts.items():
-        if mass in spectrum_counts:
-            score += min(count, spectrum_counts[mass])
-    
+def peptide_spectrum_score(pep,spectrum):
+    # ll = linear_spectrum_of_peptide(pep)
+    ll=cycle_spectrum_of_peptide(pep)
+    m1={}
+    m2={}
+    for x in ll:
+        if x not in m1: m1[x]=0
+        m1[x]+=1
+    for x in spectrum:
+        if x not in m2: m2[x]=0
+        m2[x]+=1
+    score=0
+    maxx=max(spectrum)
+    for k,v in m1.items():
+        if k>maxx: return 0
+        if k in m2:
+            score+=min(v,m2[k])
     return score
 
-def peptide_spectrum_weights_score(peptide_weights, spectrum):
-    theoretical_spectrum = cycle_spectrum_of_peptide_weights(peptide_weights)
-    spectrum_counts = {}
-    theoretical_counts = {}
-    
-    for mass in theoretical_spectrum:
-        if mass > max(spectrum):
-            return 0
-        theoretical_counts[mass] = theoretical_counts.get(mass, 0) + 1
-    
-    for mass in spectrum:
-        spectrum_counts[mass] = spectrum_counts.get(mass, 0) + 1
-    
-    score = 0
-    for mass, count in theoretical_counts.items():
-        if mass in spectrum_counts:
-            score += min(count, spectrum_counts[mass])
-    
+def peptide_spectrum_weights_score(pep,spectrum):
+    ll = cycle_spectrum_of_peptide_weights(pep)  
+    # ll = linear_spectrum_of_peptide_weights(pep)   
+    m1={}
+    m2={}
+    for x in ll:
+        if x not in m1: m1[x]=0
+        m1[x]+=1
+    for x in spectrum:
+        if x not in m2: m2[x]=0
+        m2[x]+=1
+    score=0
+    maxx=max(spectrum)
+    for k,v in m1.items():
+        if k>maxx: return 0
+        if k in m2:
+            score+=min(v,m2[k])
     return score
 
-def trim_leaderboard(leaderboard, spectrum, N):
-    if not leaderboard:
-        return leaderboard
-    
-    scored_peptides = []
-    for peptide in leaderboard:
-        score = peptide_spectrum_weights_score(peptide, spectrum)
-        scored_peptides.append((score, peptide))
-    
-    scored_peptides.sort(reverse=True)
-    
-    if len(scored_peptides) <= N:
-        return [peptide for (score, peptide) in scored_peptides]
-    
-    cutoff_score = scored_peptides[N-1][0]
-    trimmed_leaderboard = []
-    
-    for score, peptide in scored_peptides:
-        if score >= cutoff_score and score > 0:
-            trimmed_leaderboard.append(peptide)
-        else:
-            break
-    
-    return trimmed_leaderboard
+def trim_leaderboard(leaderboard,spectrum,N):
+    lb=leaderboard
+    if len(lb)==0: return lb
+    l=[]
+    for p in lb:
+        l.append((peptide_spectrum_weights_score(p,spectrum),p))
+    l.sort()
+    l.reverse()
+    lb=[]
+    s=l[0][0]
+    c=0
+    debug=0
+    for i in range(len(l)):
+        if i<N: lb.append(l[i][1])
+        if i==N-1:
+            s=l[i][0]
+            i+=1
+            while l[i][0]==s:
+                debug+=1
+                lb.append(l[i][1])
+                i+=1
+                if i>=len(l): break
+    return lb
+
+# from sortedcontainers import SortedSet
+
+def trim_lp(lp,M):
+    n=len(lp)
+    if n<=M: return lp
+    p=-1
+    for i in range(n-M):
+        if lp[i]!=lp[i+1]: p=i
+    if p<0: return lp
+    for i in range(p+1):
+        lp.pop(0)
+    return lp
 
 def leaderboard_cyclopeptide_sequencing(spectrum, N):
-    leaderboard = [[]]
-    best_peptide = []
-    best_score = 0
-    target_mass = max(spectrum)
-    
-    while leaderboard:
-        leaderboard = expand_peptides(leaderboard)
-        new_leaderboard = []
-        
-        for peptide in leaderboard:
-            peptide_mass = sum(peptide)
-            
-            if peptide_mass == target_mass:
-                current_score = peptide_spectrum_weights_score(peptide, spectrum)
-                if current_score > best_score:
-                    best_peptide = peptide.copy()
-                    best_score = current_score
-            elif peptide_mass > target_mass:
-                continue
-            
-            new_leaderboard.append(peptide)
-        
-        leaderboard = trim_leaderboard(new_leaderboard, spectrum, N)
-    
-    return best_peptide
+    lb = [[]]
+    lp=[]
+    # lp=SortedSet()
+    sc=0
+    f=0
+    mass=max(spectrum)
+    while len(lb):
+        scores=[]
+        lb=expand_peptides(lb)
+        for p in lb:
+            score=peptide_spectrum_weights_score(p,spectrum)
+            lmao = linear_spectrum_of_peptide_weights(p)
+            if max(lmao)==mass:
+                if score>sc:
+                # if score>=sc:
+                    lp=p
+                    sc=score
+                    # lp.append((score,p))
+                    # lp.add((score,tuple(p)))
+                    # trim_lp(lp,86)
+            elif max(lmao)>mass:
+                score=0
+            scores.append(score)
+        if len(lb)>N:
+            cut_off=sorted(scores)[-N]
+            leaders = []
+            for i in range(len(lb)):
+                    if scores[i] >= cut_off and scores[i] > 0:
+                        leaders.append(lb[i])
+            lb = leaders 
+    return lp
 
 def spectral_convolution(spectrum):
-    spectrum = sorted(spectrum)
-    convolution = []
-    for i in range(len(spectrum)):
-        for j in range(i):
-            mass_diff = spectrum[i] - spectrum[j]
-            if mass_diff >= 57 and mass_diff <= 200:
-                convolution.append(mass_diff)
-    return convolution
+    s=spectrum
+    s.sort()
+    n=len(s)
+    ans=[]
+    for i in range(n-1):
+        for j in range(i+1,n):
+            x = s[j]-s[i]
+            if x!=0: ans.append(x)
+    return ans
 
-def convolution_cyclopeptide_sequencing(spectrum, M, N):
-    convolution = spectral_convolution(spectrum)
-    mass_counts = {}
+def convolution_cyclopeptide_sequencing(spectrum,M,N):
+    conv = spectral_convolution(spectrum)
+    m={}
+    for x in conv:
+        if x<57 or x>200: continue
+        if x not in m: m[x]=0
+        m[x]+=1
+    pairs=[]
+    for x,f in m.items():
+        pairs.append((f,x))
+    pairs.sort()
+    # print(pairs)
+    cut_off = pairs[-M][0]
+    l=len(pairs)
+    global amino_weights
+    temp=amino_weights.copy()
+    amino_weights=set()
+    for i in range(l-1,-1,-1):
+        if pairs[i][0]>=cut_off: amino_weights.add(pairs[i][1])
+    print(amino_weights)
+    ans = leaderboard_cyclopeptide_sequencing(spectrum,N)
+    amino_weights=temp.copy()
+    return ans
     
-    for mass in convolution:
-        mass_counts[mass] = mass_counts.get(mass, 0) + 1
-    
-    sorted_masses = sorted(mass_counts.items(), key=lambda x: x[1])
-    cutoff_count = sorted_masses[-M][1]
-    
-    original_weights = amino_weights.copy()
-    amino_weights.clear()
-    
-    for mass, count in mass_counts.items():
-        if count >= cutoff_count:
-            amino_weights.add(mass)
-    
-    result = leaderboard_cyclopeptide_sequencing(spectrum, N)
-    amino_weights = original_weights
-    
-    return result

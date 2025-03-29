@@ -1,575 +1,636 @@
 import sys
 sys.setrecursionlimit(10000)
 
-def output_file(lis):
-    n=len(lis)
+def output_file(output_list):
+    n = len(output_list)
     with open("output.txt", "a") as file:
         for i in range(n):
-            file.write(f"{lis[i]} ")  
+            file.write(f"{output_list[i]} ")  
 
 def input_file(path):
     with open(path, "r") as file:
         content = file.read()
-    lis = content.split()
-    return lis
+    input_list = content.split()
+    return input_list
 
-def dp_change_problem(sum, coins):
-    n=len(coins)
-    # l=[(0,0),]
-    l=[-1]*(sum+1)
-    l[0]=0
-    for i in range(sum+1):
+def dp_change_problem(target_sum, coins):
+    n = len(coins)
+    min_coins = [-1] * (target_sum + 1)
+    min_coins[0] = 0
+    for current_sum in range(target_sum + 1):
         for coin in coins:
-            if coin+i<=sum:
-                if l[i]!=-1: 
-                    if l[coin+i]>l[i]+1 or l[coin+i]==-1:
-                        l[coin+i]=l[i]+1
-    return l[sum]
+            if coin + current_sum <= target_sum:
+                if min_coins[current_sum] != -1: 
+                    if min_coins[coin + current_sum] > min_coins[current_sum] + 1 or min_coins[coin + current_sum] == -1:
+                        min_coins[coin + current_sum] = min_coins[current_sum] + 1
+    return min_coins[target_sum]
 
-def manhattan_tourist_problem(g,d,x,y):
-    # n=4
-    # m=14
-    # g=[[[0,0] for i in range(m+1)] for i in range(n+1)]
-    # down = ''.split()
-    # for i in range(len(down)): down[i]=int(down[i])
-    # x=-1
-    # for i in range(len(down)):
-    #     y=i%(m+1)
-    #     if y==0: x+=1
-    #     g[x][y][1]=down[i]
-    # right=''.split()
-    # for i in range(len(right)): right[i]=int(right[i])
-    # x=-1
-    # for i in range(len(right)):
-    #     y=i%(m)
-    #     if y==0: x+=1
-    #     g[x][y][0]=right[i]
-    # a=max(max(down),max(right))*(-1)
-    # ll=[-1 for i in range(m+2)]
-    # ll[m+1]=a
-    # d=[[-1 for i in range(m+2)] for i in range(n+2)]
-    # for i in range(n+2): d[i]=ll.copy()
-    # d[n+1]=[a for i in range(m+2)]
-    # d[n][m]=0
-    # print(manhattan_tourist_problem(g,d,0,0))
-    if d[x][y]!=-1: return d[x][y]
-    d[x][y] = max(manhattan_tourist_problem(g,d,x+1,y)+g[x][y][1],manhattan_tourist_problem(g,d,x,y+1)+g[x][y][0])
-    return d[x][y]
+def manhattan_tourist_problem(grid, dp_table, x, y):
+    if dp_table[x][y] != -1: 
+        return dp_table[x][y]
+    dp_table[x][y] = max(manhattan_tourist_problem(grid, dp_table, x+1, y) + grid[x][y][1],
+                         manhattan_tourist_problem(grid, dp_table, x, y+1) + grid[x][y][0])
+    return dp_table[x][y]
 
-def longest_common_subsequence(s1,s2,i1,i2,dp):
-    # dp = [[[-1,''] for i in range(n2+1)] for i in range(n1+1)]
-    if dp[i1][i2][0]!=-1: return dp[i1][i2]
-    n1=len(s1)
-    n2=len(s2)
-    if i1>=n1 or i2>=n2:
-        dp[i1][i2][0]=0
-        dp[i1][i2][1]=''
-        return dp[i1][i2]
-    a=0
-    sa=''
-    if s1[i1]==s2[i2]:
-        a,sa=longest_common_subsequence(s1,s2,i1+1,i2+1,dp)[0]+1,longest_common_subsequence(s1,s2,i1+1,i2+1,dp)[1]
-    b,sb=longest_common_subsequence(s1,s2,i1+1,i2,dp)[0],longest_common_subsequence(s1,s2,i1+1,i2,dp)[1]
-    c,sc=longest_common_subsequence(s1,s2,i1,i2+1,dp)[0],longest_common_subsequence(s1,s2,i1,i2+1,dp)[1]
-    d=max(a,b,c)
-    if d==a:
-        dp[i1][i2]=[a,s1[i1]+sa]
-    elif d==b:
-        dp[i1][i2]=[b,sb]
+def longest_common_subsequence(seq1, seq2, idx1, idx2, dp_table):
+    if dp_table[idx1][idx2][0] != -1: 
+        return dp_table[idx1][idx2]
+    len_seq1 = len(seq1)
+    len_seq2 = len(seq2)
+    if idx1 >= len_seq1 or idx2 >= len_seq2:
+        dp_table[idx1][idx2][0] = 0
+        dp_table[idx1][idx2][1] = ''
+        return dp_table[idx1][idx2]
+    
+    match_len, match_str = 0, ''
+    if seq1[idx1] == seq2[idx2]:
+        match_result = longest_common_subsequence(seq1, seq2, idx1+1, idx2+1, dp_table)
+        match_len = match_result[0] + 1
+        match_str = seq1[idx1] + match_result[1]
+    
+    skip_seq1 = longest_common_subsequence(seq1, seq2, idx1+1, idx2, dp_table)
+    skip_seq2 = longest_common_subsequence(seq1, seq2, idx1, idx2+1, dp_table)
+    
+    max_len = max(match_len, skip_seq1[0], skip_seq2[0])
+    
+    if max_len == match_len:
+        dp_table[idx1][idx2] = [match_len, match_str]
+    elif max_len == skip_seq1[0]:
+        dp_table[idx1][idx2] = [skip_seq1[0], skip_seq1[1]]
     else:
-        dp[i1][i2]=[c,sc]
-    return dp[i1][i2]
+        dp_table[idx1][idx2] = [skip_seq2[0], skip_seq2[1]]
+    return dp_table[idx1][idx2]
 
-def longest_path_in_DAG(g,index,end,dp,cycle):
-    if dp[index][0]!=-1: return dp[index]
-    cycle[index]=1
-    n=len(g)
-    max=0
-    l=[]
-    for p in g[index]:
-        if cycle[p[0]]==1:
-            print("cycle",p[0])
-        pp=longest_path_in_DAG(g,p[0],end,dp,cycle)
-        if p[1]+pp[0]>max:
-            max=p[1]+pp[0]
-            l=pp[1].copy()
-            l.reverse()
-            l.append(index)
-            l.reverse()
-    dp[index]=[max,l]
-    cycle[index]=0
-    return dp[index]
+def longest_path_in_DAG(graph, current_node, end_node, dp_table, visited):
+    if dp_table[current_node][0] != -1: 
+        return dp_table[current_node]
+    visited[current_node] = 1
+    num_nodes = len(graph)
+    max_length = 0
+    path = []
+    
+    for neighbor in graph[current_node]:
+        if visited[neighbor[0]] == 1:
+            print("cycle detected at node", neighbor[0])
+        
+        neighbor_result = longest_path_in_DAG(graph, neighbor[0], end_node, dp_table, visited)
+        if neighbor[1] + neighbor_result[0] > max_length:
+            max_length = neighbor[1] + neighbor_result[0]
+            path = neighbor_result[1].copy()
+            path.reverse()
+            path.append(current_node)
+            path.reverse()
+    
+    dp_table[current_node] = [max_length, path]
+    visited[current_node] = 0
+    return dp_table[current_node]
 
-def global_alignment_problem(s1,s2,i1,i2,match,mismatch,indel,dp):
-    # bug might be present did not test with big cases
-    n1=len(s1)
-    n2=len(s2)
-    if dp[i1][i2][0]!=0.5: return dp[i1][i2]
-    print(i1,i2)
-    if i1>=n1 and i2>=n2:
-        print("1")
-        dp[i1][i2][0]=0
-        dp[i1][i2][1]=''
-        dp[i1][i2][2]=''
-        return dp[i1][i2]
-    if i1>=n1:
-        print("2")
-        dp[i1][i2][0]=(n2-i2)*indel*(-1)
-        dp[i1][i2][2]=s2[i2:]
-        dp[i1][i2][1]='-'*(n2-i2)
-        return dp[i1][i2]
-    if i2>=n2:
-        print("3")
-        dp[i1][i2][0]=(n1-i1)*indel*(-1)
-        dp[i1][i2][1]=s1[i1:]
-        dp[i1][i2][2]='-'*(n1-i1)
-        return dp[i1][i2]
-    a=0
-    sa1=''
-    sa2=''
-    if s1[i1]==s2[i2]:
-        la=global_alignment_problem(s1,s2,i1+1,i2+1,match,mismatch,indel,dp)
-        a=la[0]+match
-        sa1=s1[i1]+la[1]
-        sa2=s2[i2]+la[2]
+def global_alignment_problem(seq1, seq2, idx1, idx2, match_score, mismatch_penalty, indel_penalty, dp_table):
+    len_seq1 = len(seq1)
+    len_seq2 = len(seq2)
+    
+    if dp_table[idx1][idx2][0] != 0.5: 
+        return dp_table[idx1][idx2]
+    
+    if idx1 >= len_seq1 and idx2 >= len_seq2:
+        dp_table[idx1][idx2] = [0, '', '']
+        return dp_table[idx1][idx2]
+    
+    if idx1 >= len_seq1:
+        dp_table[idx1][idx2] = [(len_seq2 - idx2) * indel_penalty * (-1), 
+                               '-' * (len_seq2 - idx2), 
+                               seq2[idx2:]]
+        return dp_table[idx1][idx2]
+    
+    if idx2 >= len_seq2:
+        dp_table[idx1][idx2] = [(len_seq1 - idx1) * indel_penalty * (-1), 
+                               seq1[idx1:], 
+                               '-' * (len_seq1 - idx1)]
+        return dp_table[idx1][idx2]
+    
+    # Match or mismatch
+    if seq1[idx1] == seq2[idx2]:
+        align_result = global_alignment_problem(seq1, seq2, idx1+1, idx2+1, match_score, mismatch_penalty, indel_penalty, dp_table)
+        score = align_result[0] + match_score
     else:
-        la=global_alignment_problem(s1,s2,i1+1,i2+1,match,mismatch,indel,dp)
-        a=la[0]-mismatch
-        sa1=s1[i1]+la[1]
-        sa2=s2[i2]+la[2]
-    lb=global_alignment_problem(s1,s2,i1+1,i2,match,mismatch,indel,dp)
-    b=lb[0]-indel
-    sb1=s1[i1]+lb[1]
-    sb2='-'+lb[2]
-    lc=global_alignment_problem(s1,s2,i1,i2+1,match,mismatch,indel,dp)
-    c=lc[0]-indel
-    sc1='-'+lc[1]
-    sc2=s2[i2]+lc[2]
-    d=max(a,b,c)
-    if d==a:
-        dp[i1][i2]=[a,sa1,sa2]
-    elif d==b:
-        dp[i1][i2]=[b,sb1,sb2]
+        align_result = global_alignment_problem(seq1, seq2, idx1+1, idx2+1, match_score, mismatch_penalty, indel_penalty, dp_table)
+        score = align_result[0] - mismatch_penalty
+    
+    aligned_seq1 = seq1[idx1] + align_result[1]
+    aligned_seq2 = seq2[idx2] + align_result[2]
+    
+    # Insertion in seq1 (gap in seq2)
+    insert_seq1_result = global_alignment_problem(seq1, seq2, idx1, idx2+1, match_score, mismatch_penalty, indel_penalty, dp_table)
+    insert_seq1_score = insert_seq1_result[0] - indel_penalty
+    insert_seq1_aligned1 = '-' + insert_seq1_result[1]
+    insert_seq1_aligned2 = seq2[idx2] + insert_seq1_result[2]
+    
+    # Insertion in seq2 (gap in seq1)
+    insert_seq2_result = global_alignment_problem(seq1, seq2, idx1+1, idx2, match_score, mismatch_penalty, indel_penalty, dp_table)
+    insert_seq2_score = insert_seq2_result[0] - indel_penalty
+    insert_seq2_aligned1 = seq1[idx1] + insert_seq2_result[1]
+    insert_seq2_aligned2 = '-' + insert_seq2_result[2]
+    
+    max_score = max(score, insert_seq1_score, insert_seq2_score)
+    
+    if max_score == score:
+        dp_table[idx1][idx2] = [score, aligned_seq1, aligned_seq2]
+    elif max_score == insert_seq1_score:
+        dp_table[idx1][idx2] = [insert_seq1_score, insert_seq1_aligned1, insert_seq1_aligned2]
     else:
-        dp[i1][i2]=[c,sc1,sc2]
-    return dp[i1][i2]
+        dp_table[idx1][idx2] = [insert_seq2_score, insert_seq2_aligned1, insert_seq2_aligned2]
+    
+    return dp_table[idx1][idx2]
 
-def global_alignment_problem_with_scoring_matrix(s1,s2,i1,i2,score,dp):
-    # bug might be present did not test with big cases
-    m = {'A':0,'G':1,'C':2,'T':3,'-':4}
-    n1=len(s1)
-    n2=len(s2)
-    if dp[i1][i2][0]!='inf': return dp[i1][i2]
-    if i1>=n1 and i2>=n2:
-        dp[i1][i2][0]=0
-        dp[i1][i2][1]=''
-        dp[i1][i2][2]=''
-        return dp[i1][i2]
-    if i1>=n1:
-        # dp[i1][i2][0]=(n2-i2)*indel*(-1)
-        x=0
-        for i in range(i2,n2):
-            x+=score[m['-']][m[s2[i]]]
-        dp[i1][i2][0]=x
-        dp[i1][i2][2]=s2[i2:]
-        dp[i1][i2][1]='-'*(n2-i2)
-        return dp[i1][i2]
-    if i2>=n2:
-        # dp[i1][i2][0]=(n1-i1)*indel*(-1)
-        x=0
-        for i in range(i1,n1):
-            x+=score[m[s1[i]]][m['-']]
-        dp[i1][i2][0]=x
-        dp[i1][i2][1]=s1[i1:]
-        dp[i1][i2][2]='-'*(n1-i1)
-        return dp[i1][i2]
-    a=0
-    sa1=''
-    sa2=''
-    if s1[i1]==s2[i2]:
-        la=global_alignment_problem_with_scoring_matrix(s1,s2,i1+1,i2+1,score,dp)
-        a=la[0]+score[m[s1[i1]]][m[s2[i2]]]
-        sa1=s1[i1]+la[1]
-        sa2=s2[i2]+la[2]
+def global_alignment_problem_with_scoring_matrix(seq1, seq2, idx1, idx2, score_matrix, dp_table):
+    nucleotide_map = {'A':0, 'G':1, 'C':2, 'T':3, '-':4}
+    len_seq1 = len(seq1)
+    len_seq2 = len(seq2)
+    
+    if dp_table[idx1][idx2][0] != 'inf': 
+        return dp_table[idx1][idx2]
+    
+    if idx1 >= len_seq1 and idx2 >= len_seq2:
+        dp_table[idx1][idx2] = [0, '', '']
+        return dp_table[idx1][idx2]
+    
+    if idx1 >= len_seq1:
+        gap_penalty = 0
+        for i in range(idx2, len_seq2):
+            gap_penalty += score_matrix[nucleotide_map['-']][nucleotide_map[seq2[i]]]
+        dp_table[idx1][idx2] = [gap_penalty, '-' * (len_seq2 - idx2), seq2[idx2:]]
+        return dp_table[idx1][idx2]
+    
+    if idx2 >= len_seq2:
+        gap_penalty = 0
+        for i in range(idx1, len_seq1):
+            gap_penalty += score_matrix[nucleotide_map[seq1[i]]][nucleotide_map['-']]
+        dp_table[idx1][idx2] = [gap_penalty, seq1[idx1:], '-' * (len_seq1 - idx1)]
+        return dp_table[idx1][idx2]
+    
+    # Match or mismatch
+    align_result = global_alignment_problem_with_scoring_matrix(seq1, seq2, idx1+1, idx2+1, score_matrix, dp_table)
+    score = align_result[0] + score_matrix[nucleotide_map[seq1[idx1]]][nucleotide_map[seq2[idx2]]]
+    aligned_seq1 = seq1[idx1] + align_result[1]
+    aligned_seq2 = seq2[idx2] + align_result[2]
+    
+    # Insertion in seq1 (gap in seq2)
+    insert_seq1_result = global_alignment_problem_with_scoring_matrix(seq1, seq2, idx1+1, idx2, score_matrix, dp_table)
+    insert_seq1_score = insert_seq1_result[0] + score_matrix[nucleotide_map[seq1[idx1]]][nucleotide_map['-']]
+    insert_seq1_aligned1 = seq1[idx1] + insert_seq1_result[1]
+    insert_seq1_aligned2 = '-' + insert_seq1_result[2]
+    
+    # Insertion in seq2 (gap in seq1)
+    insert_seq2_result = global_alignment_problem_with_scoring_matrix(seq1, seq2, idx1, idx2+1, score_matrix, dp_table)
+    insert_seq2_score = insert_seq2_result[0] + score_matrix[nucleotide_map['-']][nucleotide_map[seq2[idx2]]]
+    insert_seq2_aligned1 = '-' + insert_seq2_result[1]
+    insert_seq2_aligned2 = seq2[idx2] + insert_seq2_result[2]
+    
+    max_score = max(score, insert_seq1_score, insert_seq2_score)
+    
+    if max_score == score:
+        dp_table[idx1][idx2] = [score, aligned_seq1, aligned_seq2]
+    elif max_score == insert_seq1_score:
+        dp_table[idx1][idx2] = [insert_seq1_score, insert_seq1_aligned1, insert_seq1_aligned2]
     else:
-        la=global_alignment_problem_with_scoring_matrix(s1,s2,i1+1,i2+1,score,dp)
-        a=la[0]+score[m[s1[i1]]][m[s2[i2]]]
-        sa1=s1[i1]+la[1]
-        sa2=s2[i2]+la[2]
-    lb=global_alignment_problem_with_scoring_matrix(s1,s2,i1+1,i2,score,dp)
-    b=lb[0]+score[m[s1[i1]]][m['-']]
-    sb1=s1[i1]+lb[1]
-    sb2='-'+lb[2]
-    lc=global_alignment_problem_with_scoring_matrix(s1,s2,i1,i2+1,score,dp)
-    c=lc[0]+score[m['-']][m[s2[i2]]]
-    sc1='-'+lc[1]
-    sc2=s2[i2]+lc[2]
-    d=max(a,b,c)
-    if d==a:
-        dp[i1][i2]=[a,sa1,sa2]
-    elif d==b:
-        dp[i1][i2]=[b,sb1,sb2]
-    else:
-        dp[i1][i2]=[c,sc1,sc2]
-    return dp[i1][i2]
+        dp_table[idx1][idx2] = [insert_seq2_score, insert_seq2_aligned1, insert_seq2_aligned2]
+    
+    return dp_table[idx1][idx2]
 
-def local_alignment_problem_with_scoring_matrix(s1,s2,i1,i2,score,indel,dp):
-    n1=len(s1)
-    n2=len(s2)
-    if dp[i1][i2][0]!='inf': return dp[i1][i2]
-    if i1>=n1 and i2>=n2:
-        dp[i1][i2][0]=0
-        dp[i1][i2][1]=''
-        dp[i1][i2][2]=''
-        return dp[i1][i2]
-    if i1>=n1:
-        dp[i1][i2][0]=(n2-i2)*indel*(-1)
-        dp[i1][i2][2]=s2[i2:]
-        dp[i1][i2][1]='-'*(n2-i2)
-        return dp[i1][i2]
-    if i2>=n2:
-        dp[i1][i2][0]=(n1-i1)*indel*(-1)
-        dp[i1][i2][1]=s1[i1:]
-        dp[i1][i2][2]='-'*(n1-i1)
-        return dp[i1][i2]
-    a=0
-    sa1=''
-    sa2=''
-    if s1[i1]==s2[i2]:
-        la=local_alignment_problem_with_scoring_matrix(s1,s2,i1+1,i2+1,score,indel,dp)
-        a=la[0]+score[s1[i1]][s2[i2]]
-        sa1=s1[i1]+la[1]
-        sa2=s2[i2]+la[2]
+def local_alignment_problem_with_scoring_matrix(seq1, seq2, idx1, idx2, score_matrix, indel_penalty, dp_table):
+    len_seq1 = len(seq1)
+    len_seq2 = len(seq2)
+    
+    if dp_table[idx1][idx2][0] != 'inf': 
+        return dp_table[idx1][idx2]
+    
+    if idx1 >= len_seq1 and idx2 >= len_seq2:
+        dp_table[idx1][idx2] = [0, '', '']
+        return dp_table[idx1][idx2]
+    
+    if idx1 >= len_seq1:
+        dp_table[idx1][idx2] = [(len_seq2 - idx2) * indel_penalty * (-1), 
+                               '-' * (len_seq2 - idx2), 
+                               seq2[idx2:]]
+        return dp_table[idx1][idx2]
+    
+    if idx2 >= len_seq2:
+        dp_table[idx1][idx2] = [(len_seq1 - idx1) * indel_penalty * (-1), 
+                               seq1[idx1:], 
+                               '-' * (len_seq1 - idx1)]
+        return dp_table[idx1][idx2]
+    
+    # Match or mismatch
+    align_result = local_alignment_problem_with_scoring_matrix(seq1, seq2, idx1+1, idx2+1, score_matrix, indel_penalty, dp_table)
+    score = align_result[0] + score_matrix[seq1[idx1]][seq2[idx2]]
+    aligned_seq1 = seq1[idx1] + align_result[1]
+    aligned_seq2 = seq2[idx2] + align_result[2]
+    
+    # Insertion in seq1 (gap in seq2)
+    insert_seq1_result = local_alignment_problem_with_scoring_matrix(seq1, seq2, idx1+1, idx2, score_matrix, indel_penalty, dp_table)
+    insert_seq1_score = insert_seq1_result[0] - indel_penalty
+    insert_seq1_aligned1 = seq1[idx1] + insert_seq1_result[1]
+    insert_seq1_aligned2 = '-' + insert_seq1_result[2]
+    
+    # Insertion in seq2 (gap in seq1)
+    insert_seq2_result = local_alignment_problem_with_scoring_matrix(seq1, seq2, idx1, idx2+1, score_matrix, indel_penalty, dp_table)
+    insert_seq2_score = insert_seq2_result[0] - indel_penalty
+    insert_seq2_aligned1 = '-' + insert_seq2_result[1]
+    insert_seq2_aligned2 = seq2[idx2] + insert_seq2_result[2]
+    
+    # Local alignment option (start new alignment)
+    local_score = 0
+    local_aligned1 = ''
+    local_aligned2 = ''
+    
+    if idx1 == 0 and idx2 == 0:
+        for i in range(len_seq1):
+            for j in range(len_seq2):
+                if i == 0 and j == 0: 
+                    continue
+                local_result = local_alignment_problem_with_scoring_matrix(seq1, seq2, i, j, score_matrix, indel_penalty, dp_table)
+                if local_result[0] > local_score:
+                    local_score = local_result[0]
+                    local_aligned1 = local_result[1]
+                    local_aligned2 = local_result[2]
     else:
-        la=local_alignment_problem_with_scoring_matrix(s1,s2,i1+1,i2+1,score,indel,dp)
-        a=la[0]+score[s1[i1]][s2[i2]]
-        sa1=s1[i1]+la[1]
-        sa2=s2[i2]+la[2]
-    lb=local_alignment_problem_with_scoring_matrix(s1,s2,i1+1,i2,score,indel,dp)
-    b=lb[0]-indel
-    sb1=s1[i1]+lb[1]
-    sb2='-'+lb[2]
-    lc=local_alignment_problem_with_scoring_matrix(s1,s2,i1,i2+1,score,indel,dp)
-    c=lc[0]-indel
-    sc1='-'+lc[1]
-    sc2=s2[i2]+lc[2]
-    e=0
-    se1=''
-    se2=''
-    if i1==0 and i2==0:
-        for i in range(n1):
-            for j in range(n2):
-                if i==0 and j==0: continue
-                le=local_alignment_problem_with_scoring_matrix(s1,s2,i,j,score,indel,dp)
-                ee=le[0]
-                if ee>e:
-                    e=ee
-                    se1=le[1]
-                    se2=le[2]
+        local_score = score_matrix[seq1[idx1]][seq2[idx2]]
+        local_aligned1 = seq1[idx1]
+        local_aligned2 = seq2[idx2]
+    
+    max_score = max(score, insert_seq1_score, insert_seq2_score, local_score)
+    
+    if max_score == score:
+        dp_table[idx1][idx2] = [score, aligned_seq1, aligned_seq2]
+    elif max_score == insert_seq1_score:
+        dp_table[idx1][idx2] = [insert_seq1_score, insert_seq1_aligned1, insert_seq1_aligned2]
+    elif max_score == insert_seq2_score:
+        dp_table[idx1][idx2] = [insert_seq2_score, insert_seq2_aligned1, insert_seq2_aligned2]
     else:
-        e=score[s1[i1]][s2[i2]]
-        se1=s1[i1]
-        se2=s2[i2]
-    d=max(a,b,c,e)
-    if d==a:
-        dp[i1][i2]=[a,sa1,sa2]
-    elif d==b:
-        dp[i1][i2]=[b,sb1,sb2]
-    elif d==c:
-        dp[i1][i2]=[c,sc1,sc2]
-    else:
-        dp[i1][i2]=[e,se1,se2]
-    return dp[i1][i2]
+        dp_table[idx1][idx2] = [local_score, local_aligned1, local_aligned2]
+    
+    return dp_table[idx1][idx2]
 
-def fitting_alignment_problem(s1,s2,i1,i2,score,indel,dp):
-    n1=len(s1)
-    n2=len(s2)
-    if dp[i1][i2][0]!='inf': return dp[i1][i2]
-    if i1>=n1 and i2>=n2:
-        dp[i1][i2][0]=0
-        dp[i1][i2][1]=''
-        dp[i1][i2][2]=''
-        return dp[i1][i2]
-    if i1>=n1:
-        dp[i1][i2][0]=(n2-i2)*indel*(-1)
-        dp[i1][i2][2]=s2[i2:]
-        dp[i1][i2][1]='-'*(n2-i2)
-        return dp[i1][i2]
-    if i2>=n2:
-        dp[i1][i2][0]=(n1-i1)*indel*(-1)
-        dp[i1][i2][1]=s1[i1:]
-        dp[i1][i2][2]='-'*(n1-i1)
-        return dp[i1][i2]
-    a=0
-    sa1=''
-    sa2=''
-    if s1[i1]==s2[i2]:
-        la=fitting_alignment_problem(s1,s2,i1+1,i2+1,score,indel,dp)
-        a=la[0]+score[s1[i1]][s2[i2]]
-        sa1=s1[i1]+la[1]
-        sa2=s2[i2]+la[2]
+def fitting_alignment_problem(seq1, seq2, idx1, idx2, score_matrix, indel_penalty, dp_table):
+    len_seq1 = len(seq1)
+    len_seq2 = len(seq2)
+    
+    if dp_table[idx1][idx2][0] != 'inf': 
+        return dp_table[idx1][idx2]
+    
+    if idx1 >= len_seq1 and idx2 >= len_seq2:
+        dp_table[idx1][idx2] = [0, '', '']
+        return dp_table[idx1][idx2]
+    
+    if idx1 >= len_seq1:
+        dp_table[idx1][idx2] = [(len_seq2 - idx2) * indel_penalty * (-1), 
+                               '-' * (len_seq2 - idx2), 
+                               seq2[idx2:]]
+        return dp_table[idx1][idx2]
+    
+    if idx2 >= len_seq2:
+        dp_table[idx1][idx2] = [(len_seq1 - idx1) * indel_penalty * (-1), 
+                               seq1[idx1:], 
+                               '-' * (len_seq1 - idx1)]
+        return dp_table[idx1][idx2]
+    
+    # Match or mismatch
+    align_result = fitting_alignment_problem(seq1, seq2, idx1+1, idx2+1, score_matrix, indel_penalty, dp_table)
+    score = align_result[0] + score_matrix[seq1[idx1]][seq2[idx2]]
+    aligned_seq1 = seq1[idx1] + align_result[1]
+    aligned_seq2 = seq2[idx2] + align_result[2]
+    
+    # Insertion in seq1 (gap in seq2)
+    insert_seq1_result = fitting_alignment_problem(seq1, seq2, idx1+1, idx2, score_matrix, indel_penalty, dp_table)
+    insert_seq1_score = insert_seq1_result[0] - indel_penalty
+    insert_seq1_aligned1 = seq1[idx1] + insert_seq1_result[1]
+    insert_seq1_aligned2 = '-' + insert_seq1_result[2]
+    
+    # Insertion in seq2 (gap in seq1)
+    insert_seq2_result = fitting_alignment_problem(seq1, seq2, idx1, idx2+1, score_matrix, indel_penalty, dp_table)
+    insert_seq2_score = insert_seq2_result[0] - indel_penalty
+    insert_seq2_aligned1 = '-' + insert_seq2_result[1]
+    insert_seq2_aligned2 = seq2[idx2] + insert_seq2_result[2]
+    
+    # Special cases for fitting alignment
+    fitting_score = 0
+    fitting_aligned1 = ''
+    fitting_aligned2 = ''
+    
+    if idx1 == 0 and idx2 == 0:
+        for i in range(1, len_seq1):
+            local_result = fitting_alignment_problem(seq1, seq2, i, 0, score_matrix, indel_penalty, dp_table)
+            if local_result[0] > fitting_score:
+                fitting_score = local_result[0]
+                fitting_aligned1 = local_result[1]
+                fitting_aligned2 = local_result[2]
+    elif idx2 == len_seq2 - 1 and idx1 != len_seq1 - 1:
+        fitting_score = score_matrix[seq1[idx1]][seq2[idx2]]
+        fitting_aligned1 = seq1[idx1]
+        fitting_aligned2 = seq2[idx2]
     else:
-        la=fitting_alignment_problem(s1,s2,i1+1,i2+1,score,indel,dp)
-        a=la[0]+score[s1[i1]][s2[i2]]
-        sa1=s1[i1]+la[1]
-        sa2=s2[i2]+la[2]
-    lb=fitting_alignment_problem(s1,s2,i1+1,i2,score,indel,dp)
-    b=lb[0]-indel
-    sb1=s1[i1]+lb[1]
-    sb2='-'+lb[2]
-    lc=fitting_alignment_problem(s1,s2,i1,i2+1,score,indel,dp)
-    c=lc[0]-indel
-    sc1='-'+lc[1]
-    sc2=s2[i2]+lc[2]
-    e=0
-    se1=''
-    se2=''
-    if i1==0 and i2==0:
-        for i in range(n1):
-            if i==0: continue
-            le=fitting_alignment_problem(s1,s2,i,0,score,indel,dp)
-            ee=le[0]
-            if ee>e:
-                e=ee
-                se1=le[1]
-                se2=le[2]
-    elif i2==n2-1 and i1!=n1-1:
-        e=score[s1[i1]][s2[i2]]
-        se1=s1[i1]
-        se2=s2[i2]
-    else:
-        d=max(a,b,c)
-        if d==a:
-            dp[i1][i2]=[a,sa1,sa2]
-        elif d==b:
-            dp[i1][i2]=[b,sb1,sb2]
+        max_score = max(score, insert_seq1_score, insert_seq2_score)
+        if max_score == score:
+            dp_table[idx1][idx2] = [score, aligned_seq1, aligned_seq2]
+        elif max_score == insert_seq1_score:
+            dp_table[idx1][idx2] = [insert_seq1_score, insert_seq1_aligned1, insert_seq1_aligned2]
         else:
-            dp[i1][i2]=[c,sc1,sc2]
-        return dp[i1][i2]
-    d=max(a,b,c,e)
-    if d==a:
-        dp[i1][i2]=[a,sa1,sa2]
-    elif d==b:
-        dp[i1][i2]=[b,sb1,sb2]
-    elif d==c:
-        dp[i1][i2]=[c,sc1,sc2]
+            dp_table[idx1][idx2] = [insert_seq2_score, insert_seq2_aligned1, insert_seq2_aligned2]
+        return dp_table[idx1][idx2]
+    
+    max_score = max(score, insert_seq1_score, insert_seq2_score, fitting_score)
+    
+    if max_score == score:
+        dp_table[idx1][idx2] = [score, aligned_seq1, aligned_seq2]
+    elif max_score == insert_seq1_score:
+        dp_table[idx1][idx2] = [insert_seq1_score, insert_seq1_aligned1, insert_seq1_aligned2]
+    elif max_score == insert_seq2_score:
+        dp_table[idx1][idx2] = [insert_seq2_score, insert_seq2_aligned1, insert_seq2_aligned2]
     else:
-        dp[i1][i2]=[e,se1,se2]
-    return dp[i1][i2]
+        dp_table[idx1][idx2] = [fitting_score, fitting_aligned1, fitting_aligned2]
+    
+    return dp_table[idx1][idx2]
 
-def gap_penalties_alignemnt_problem(s1,s2,i1,i2,match,mismatch,sig,ep,k,dp):
-    indel=sig
-    if k==1: indel=ep
-    n1=len(s1)
-    n2=len(s2)
-    if dp[i1][i2][0]!='inf': return dp[i1][i2]
-    if i1>=n1 and i2>=n2:
-        dp[i1][i2][0]=0
-        dp[i1][i2][1]=''
-        dp[i1][i2][2]=''
-        return dp[i1][i2]
-    if i1>=n1:
-        dp[i1][i2][0]=(n2-i2-1)*k*(-1)-indel
-        dp[i1][i2][2]=s2[i2:]
-        dp[i1][i2][1]='-'*(n2-i2)
-        return dp[i1][i2]
-    if i2>=n2:
-        dp[i1][i2][0]=(n1-i1-1)*indel*(-1)-indel
-        dp[i1][i2][1]=s1[i1:]
-        dp[i1][i2][2]='-'*(n1-i1)
-        return dp[i1][i2]
-    a=0
-    sa1=''
-    sa2=''
-    if s1[i1]==s2[i2]:
-        la=gap_penalties_alignemnt_problem(s1,s2,i1+1,i2+1,match,mismatch,sig,ep,0,dp)
-        a=la[0]+match
-        sa1=s1[i1]+la[1]
-        sa2=s2[i2]+la[2]
+def gap_penalties_alignment_problem(seq1, seq2, idx1, idx2, match_score, mismatch_penalty, gap_open, gap_extend, in_gap, dp_table):
+    current_gap_penalty = gap_open
+    if in_gap == 1: 
+        current_gap_penalty = gap_extend
+    
+    len_seq1 = len(seq1)
+    len_seq2 = len(seq2)
+    
+    if dp_table[idx1][idx2][0] != 'inf': 
+        return dp_table[idx1][idx2]
+    
+    if idx1 >= len_seq1 and idx2 >= len_seq2:
+        dp_table[idx1][idx2] = [0, '', '']
+        return dp_table[idx1][idx2]
+    
+    if idx1 >= len_seq1:
+        dp_table[idx1][idx2] = [(len_seq2 - idx2 - 1) * in_gap * (-1) - current_gap_penalty, 
+                               '-' * (len_seq2 - idx2), 
+                               seq2[idx2:]]
+        return dp_table[idx1][idx2]
+    
+    if idx2 >= len_seq2:
+        dp_table[idx1][idx2] = [(len_seq1 - idx1 - 1) * current_gap_penalty * (-1) - current_gap_penalty, 
+                               seq1[idx1:], 
+                               '-' * (len_seq1 - idx1)]
+        return dp_table[idx1][idx2]
+    
+    # Match or mismatch
+    if seq1[idx1] == seq2[idx2]:
+        align_result = gap_penalties_alignment_problem(seq1, seq2, idx1+1, idx2+1, match_score, mismatch_penalty, gap_open, gap_extend, 0, dp_table)
+        score = align_result[0] + match_score
     else:
-        la=gap_penalties_alignemnt_problem(s1,s2,i1+1,i2+1,match,mismatch,sig,ep,0,dp)
-        a=la[0]-mismatch
-        sa1=s1[i1]+la[1]
-        sa2=s2[i2]+la[2]
-    lb=gap_penalties_alignemnt_problem(s1,s2,i1+1,i2,match,mismatch,sig,ep,1,dp)
-    b=lb[0]-indel
-    sb1=s1[i1]+lb[1]
-    sb2='-'+lb[2]
-    lc=gap_penalties_alignemnt_problem(s1,s2,i1,i2+1,match,mismatch,sig,ep,1,dp)
-    c=lc[0]-indel
-    sc1='-'+lc[1]
-    sc2=s2[i2]+lc[2]
-    d=max(a,b,c)
-    if d==a:
-        dp[i1][i2]=[a,sa1,sa2]
-    elif d==b:
-        dp[i1][i2]=[b,sb1,sb2]
+        align_result = gap_penalties_alignment_problem(seq1, seq2, idx1+1, idx2+1, match_score, mismatch_penalty, gap_open, gap_extend, 0, dp_table)
+        score = align_result[0] - mismatch_penalty
+    
+    aligned_seq1 = seq1[idx1] + align_result[1]
+    aligned_seq2 = seq2[idx2] + align_result[2]
+    
+    # Insertion in seq1 (gap in seq2)
+    insert_seq1_result = gap_penalties_alignment_problem(seq1, seq2, idx1+1, idx2, match_score, mismatch_penalty, gap_open, gap_extend, 1, dp_table)
+    insert_seq1_score = insert_seq1_result[0] - current_gap_penalty
+    insert_seq1_aligned1 = seq1[idx1] + insert_seq1_result[1]
+    insert_seq1_aligned2 = '-' + insert_seq1_result[2]
+    
+    # Insertion in seq2 (gap in seq1)
+    insert_seq2_result = gap_penalties_alignment_problem(seq1, seq2, idx1, idx2+1, match_score, mismatch_penalty, gap_open, gap_extend, 1, dp_table)
+    insert_seq2_score = insert_seq2_result[0] - current_gap_penalty
+    insert_seq2_aligned1 = '-' + insert_seq2_result[1]
+    insert_seq2_aligned2 = seq2[idx2] + insert_seq2_result[2]
+    
+    max_score = max(score, insert_seq1_score, insert_seq2_score)
+    
+    if max_score == score:
+        dp_table[idx1][idx2] = [score, aligned_seq1, aligned_seq2]
+    elif max_score == insert_seq1_score:
+        dp_table[idx1][idx2] = [insert_seq1_score, insert_seq1_aligned1, insert_seq1_aligned2]
     else:
-        dp[i1][i2]=[c,sc1,sc2]
-    return dp[i1][i2]
+        dp_table[idx1][idx2] = [insert_seq2_score, insert_seq2_aligned1, insert_seq2_aligned2]
+    
+    return dp_table[idx1][idx2]
 
-def middle_edge_in_alignment_graph(s1,s2,x1,x2,y1,y2,match,mismatch,indel):
-    # bug might be present did not test with big cases
-    if x1==x2 and y1==y2: return
-    if y1==y2:
-        m=(x1+x2)//2
-        return (m,y1),(m+1,y1)
-    if x1==x2:
-        m=(y1+y2)//2
-        return (x1,m),(x1,m+1)
-    indel*=(-1)
-    mismatch*=(-1)
-    m = (x1+x2)//2
-    n = y2-y1+1
-    f=[]
-    pf=[i*indel for i in range(n)]
-    if x1==m: f=pf
-    for i in range(x1,m):
-        f=['-' for i in range(n)]
-        for j in range(n):
-            if j!=n-1:
-                if s1[i]==s2[y1+j]:
-                    if f[j+1]=='-' or pf[j]+match>f[j+1]: f[j+1]=pf[j]+match
+def middle_edge_in_alignment_graph(seq1, seq2, x_start, x_end, y_start, y_end, match_score, mismatch_penalty, indel_penalty):
+    if x_start == x_end and y_start == y_end: 
+        return None
+    
+    if y_start == y_end:
+        mid_x = (x_start + x_end) // 2
+        return (mid_x, y_start), (mid_x + 1, y_start)
+    
+    if x_start == x_end:
+        mid_y = (y_start + y_end) // 2
+        return (x_start, mid_y), (x_start, mid_y + 1)
+    
+    # Convert penalties to positive values for easier calculation
+    indel_penalty *= -1
+    mismatch_penalty *= -1
+    
+    mid_x = (x_start + x_end) // 2
+    num_cols = y_end - y_start + 1
+    
+    # Forward pass
+    forward_scores = []
+    prev_forward = [i * indel_penalty for i in range(num_cols)]
+    
+    if x_start == mid_x: 
+        forward_scores = prev_forward
+    
+    for i in range(x_start, mid_x):
+        current_forward = ['-'] * num_cols
+        for j in range(num_cols):
+            if j != num_cols - 1:
+                if seq1[i] == seq2[y_start + j]:
+                    if current_forward[j + 1] == '-' or prev_forward[j] + match_score > current_forward[j + 1]:
+                        current_forward[j + 1] = prev_forward[j] + match_score
                 else:
-                    if f[j+1]=='-' or pf[j]+mismatch>f[j+1]: f[j+1]=pf[j]+mismatch
-                pf[j+1]=max(pf[j]+indel,pf[j+1])
-            if f[j]=='-' or pf[j]+indel>f[j]: f[j]=pf[j]+indel
-        if i!=m-1: pf=f.copy()
-    b=[]
-    pb=[(n-i-1)*indel for i in range(n)]
-    if x2==m: b=pb
-    for i in range(x2,m,-1):
-        b=['-' for i in range(n)]
-        for j in range(n-1,-1,-1):
-            if j!=0:
-                if s1[i-1]==s2[y1+j-1]:
-                    if b[j-1]=='-' or pb[j]+match>b[j-1]: b[j-1]=pb[j]+match
+                    if current_forward[j + 1] == '-' or prev_forward[j] + mismatch_penalty > current_forward[j + 1]:
+                        current_forward[j + 1] = prev_forward[j] + mismatch_penalty
+                
+                prev_forward[j + 1] = max(prev_forward[j] + indel_penalty, prev_forward[j + 1])
+            
+            if current_forward[j] == '-' or prev_forward[j] + indel_penalty > current_forward[j]:
+                current_forward[j] = prev_forward[j] + indel_penalty
+        
+        if i != mid_x - 1: 
+            prev_forward = current_forward.copy()
+    
+    # Backward pass
+    backward_scores = []
+    prev_backward = [(num_cols - i - 1) * indel_penalty for i in range(num_cols)]
+    
+    if x_end == mid_x: 
+        backward_scores = prev_backward
+    
+    for i in range(x_end, mid_x, -1):
+        current_backward = ['-'] * num_cols
+        for j in range(num_cols - 1, -1, -1):
+            if j != 0:
+                if seq1[i - 1] == seq2[y_start + j - 1]:
+                    if current_backward[j - 1] == '-' or prev_backward[j] + match_score > current_backward[j - 1]:
+                        current_backward[j - 1] = prev_backward[j] + match_score
                 else:
-                    if b[j-1]=='-' or pb[j]+mismatch>b[j-1]: b[j-1]=pb[j]+mismatch
-                pb[j-1]=max(pb[j]+indel,pb[j-1])
-            if b[j]=='-' or pb[j]+indel>b[j]: b[j]=pb[j]+indel
-        if i!=m+1: pb=b.copy()
-    mm = []
-    for i in range(n):
-        try: mm.append(b[i]+f[i])
+                    if current_backward[j - 1] == '-' or prev_backward[j] + mismatch_penalty > current_backward[j - 1]:
+                        current_backward[j - 1] = prev_backward[j] + mismatch_penalty
+                
+                prev_backward[j - 1] = max(prev_backward[j] + indel_penalty, prev_backward[j - 1])
+            
+            if current_backward[j] == '-' or prev_backward[j] + indel_penalty > current_backward[j]:
+                current_backward[j] = prev_backward[j] + indel_penalty
+        
+        if i != mid_x + 1: 
+            prev_backward = current_backward.copy()
+    
+    # Combine scores
+    combined_scores = []
+    for i in range(num_cols):
+        try:
+            combined_scores.append(backward_scores[i] + forward_scores[i])
         except:
-            print(i)
+            print("Error in score calculation at index", i)
             quit()
-    # print(f)
-    # print(b)
-    # print(mm)
-    # print(pb)
-    ma=0
-    if len(mm):
-        ma=max(mm)
-    mx=0
-    for i in range(n):
-        if mm[i]==ma:
-            mx=i
+    
+    max_score = 0
+    if len(combined_scores):
+        max_score = max(combined_scores)
+    
+    max_index = 0
+    for i in range(num_cols):
+        if combined_scores[i] == max_score:
+            max_index = i
             break
-    if mx==n-1:
-        return (m,mx+y1),(m+1,mx+y1)
-    if s1[m]==s2[mx+y1]:
-        return (m,mx+y1),(m+1,mx+1+y1)
-    a=pb[mx]+indel
-    c=b[mx+1]+indel
-    d=pb[mx+1]+mismatch
-    if d>=a and d>=c:
-        return (m,mx+y1),(m+1,mx+y1+1)
-    elif a>=c and a>=d:
-        return (m,mx+y1),(m+1,mx+y1)
+    
+    if max_index == num_cols - 1:
+        return (mid_x, max_index + y_start), (mid_x + 1, max_index + y_start)
+    
+    if seq1[mid_x] == seq2[max_index + y_start]:
+        return (mid_x, max_index + y_start), (mid_x + 1, max_index + 1 + y_start)
+    
+    # Determine the best edge
+    diagonal_score = prev_backward[max_index + 1] + mismatch_penalty
+    down_score = prev_backward[max_index] + indel_penalty
+    right_score = backward_scores[max_index + 1] + indel_penalty
+    
+    if diagonal_score >= down_score and diagonal_score >= right_score:
+        return (mid_x, max_index + y_start), (mid_x + 1, max_index + y_start + 1)
+    elif down_score >= right_score and down_score >= diagonal_score:
+        return (mid_x, max_index + y_start), (mid_x + 1, max_index + y_start)
     else:
-        return (m,mx+y1),(m,mx+1+y1)
+        return (mid_x, max_index + y_start), (mid_x, max_index + 1 + y_start)
 
-def linear_space_alignment(s1,s2,x1,x2,y1,y2,match,mismatch,indel,m):
-    # bug might be present did not test with big cases
-    if x1==x2 and y1==y2: return
-    # print(x1,x2,y1,y2)
-    p1,p2=middle_edge_in_alignment_graph(s1,s2,x1,x2,y1,y2,match,mismatch,indel)
-    m[p1]=p2
-    linear_space_alignment(s1,s2,x1,p1[0],y1,p1[1],match,mismatch,indel,m)
-    linear_space_alignment(s1,s2,p2[0],x2,p2[1],y2,match,mismatch,indel,m)
+def linear_space_alignment(seq1, seq2, x_start, x_end, y_start, y_end, match_score, mismatch_penalty, indel_penalty, edges):
+    if x_start == x_end and y_start == y_end: 
+        return
+    
+    start_edge, end_edge = middle_edge_in_alignment_graph(seq1, seq2, x_start, x_end, y_start, y_end, match_score, mismatch_penalty, indel_penalty)
+    edges[start_edge] = end_edge
+    
+    # Recurse on the left part
+    linear_space_alignment(seq1, seq2, x_start, start_edge[0], y_start, start_edge[1], match_score, mismatch_penalty, indel_penalty, edges)
+    
+    # Recurse on the right part
+    linear_space_alignment(seq1, seq2, end_edge[0], x_end, end_edge[1], y_end, match_score, mismatch_penalty, indel_penalty, edges)
 
-def two_break_sorting(p,q):
-    eq = set()
-    vp={}
-    # for l in q:
-    l=q
-    for i in range(len(l)):
-        if i==len(l)-1:
-            eq.add((l[i],-l[0]))
-            eq.add((-l[0],l[i]))
+def two_break_sorting(permutation, target):
+    target_edges = set()
+    permutation_map = {}
+    
+    # Create edges from target permutation
+    for i in range(len(target)):
+        if i == len(target) - 1:
+            target_edges.add((target[i], -target[0]))
+            target_edges.add((-target[0], target[i]))
         else:
-            eq.add((l[i],-l[i+1]))
-            eq.add((-l[i+1],l[i]))
-    n=len(eq)
-    n//=2
-    # for l in p:
-    l=p
-    for i in range(len(l)):
-        if i==len(l)-1:
-            vp[l[i]]=-l[0]
-            vp[-l[0]]=l[i]
+            target_edges.add((target[i], -target[i + 1]))
+            target_edges.add((-target[i + 1], target[i]))
+    
+    num_blocks = len(target_edges) // 2
+    
+    # Create edges from initial permutation
+    for i in range(len(permutation)):
+        if i == len(permutation) - 1:
+            permutation_map[permutation[i]] = -permutation[0]
+            permutation_map[-permutation[0]] = permutation[i]
         else:
-            vp[l[i]]=-l[i+1]
-            vp[-l[i+1]]=l[i]
-    # ans=0
-    ans = []
-    s=set()
-    done=set()
-    for i in range(1,n+1):
-        s.add(i)
-        s.add(-i)
-    for x in s:
-        if x in done: continue
-        start = x
-        cycle=[]
-        cycle.append(x)
-        done.add(x)
-        done.add(-x)
-        x=vp[x]
-        x*=(-1)
-        ll=[]
-        while x!=start:
-            cycle.append(x)
-            done.add(x)
-            done.add(-x)
-            x=vp[x]
-            x*=-1
-        ll.append(cycle)
-        ans.append(ll)
-    for e in eq:
-        x=e[0]
-        y=e[1]
-        nx=vp[x]
-        ny=vp[y]
-        if nx==y and ny==x: continue
-        vp[x]=y
-        vp[y]=x
-        vp[nx]=ny
-        vp[ny]=nx
-        s=set()
-        done=set()
-        for i in range(1,n+1):
-            s.add(i)
-            s.add(-i)
-        ll=[]
-        for x in s:
-            if x in done: continue
-            start = x
-            cycle=[]
-            cycle.append(x)
-            done.add(x)
-            done.add(-x)
-            x=vp[x]
-            x*=(-1)
-            while x!=start:
-                cycle.append(x)
-                done.add(x)
-                done.add(-x)
-                x=vp[x]
-                x*=-1
-            ll.append(cycle)
-        ans.append(ll)
-        # ans+=1
-    return ans
+            permutation_map[permutation[i]] = -permutation[i + 1]
+            permutation_map[-permutation[i + 1]] = permutation[i]
+    
+    breakpoint_graph = []
+    nodes = set()
+    visited = set()
+    
+    for i in range(1, num_blocks + 1):
+        nodes.add(i)
+        nodes.add(-i)
+    
+    # Find cycles in initial permutation
+    for node in nodes:
+        if node in visited: 
+            continue
+        
+        cycle = [node]
+        visited.add(node)
+        visited.add(-node)
+        
+        next_node = permutation_map[node]
+        next_node *= -1
+        
+        while next_node != node:
+            cycle.append(next_node)
+            visited.add(next_node)
+            visited.add(-next_node)
+            next_node = permutation_map[next_node]
+            next_node *= -1
+        
+        breakpoint_graph.append([cycle])
+    
+    # Perform 2-breaks to transform permutation into target
+    for edge in target_edges:
+        x = edge[0]
+        y = edge[1]
+        x_next = permutation_map[x]
+        y_next = permutation_map[y]
+        
+        if x_next == y and y_next == x: 
+            continue
+        
+        # Perform the 2-break
+        permutation_map[x] = y
+        permutation_map[y] = x
+        permutation_map[x_next] = y_next
+        permutation_map[y_next] = x_next
+        
+        # Find the new cycles
+        nodes = set()
+        visited = set()
+        current_breakpoint_graph = []
+        
+        for i in range(1, num_blocks + 1):
+            nodes.add(i)
+            nodes.add(-i)
+        
+        for node in nodes:
+            if node in visited: 
+                continue
+            
+            cycle = [node]
+            visited.add(node)
+            visited.add(-node)
+            
+            next_node = permutation_map[node]
+            next_node *= -1
+            
+            while next_node != node:
+                cycle.append(next_node)
+                visited.add(next_node)
+                visited.add(-next_node)
+                next_node = permutation_map[next_node]
+                next_node *= -1
+            
+            current_breakpoint_graph.append(cycle)
+        
+        breakpoint_graph.append(current_breakpoint_graph)
+    
+    return breakpoint_graph
